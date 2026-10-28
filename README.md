@@ -1,5 +1,7 @@
 # focusebuddy
 
+[Try the live app](https://focusebuddy.vercel.app/) · [Source code](https://github.com/rashinkp/focusebuddy)
+
 A personal focus, hydration, and movement companion. Track work sessions, log water, and make room for breaks in a responsive interface that keeps activity on your device.
 
 Built by [Rashin](https://rashinkp.vercel.app/) with React, TypeScript, Vite, Tailwind CSS, and Lucide.
