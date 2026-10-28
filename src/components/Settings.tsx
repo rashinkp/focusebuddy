@@ -193,7 +193,7 @@ export function Settings({
               </button>
             </div>
             <p className="fine-print">
-              Keep Posture Buddy open for reminders. Browsers may delay timers
+              Keep focusebuddy open for reminders. Browsers may delay timers
               and notifications when suspended or closed. Notification changes
               apply immediately.
             </p>
@@ -241,7 +241,7 @@ export function Settings({
             : 'Clear all application data'}
         </button>
         <span className="fine-print">
-          Posture Buddy · Version {__APP_VERSION__}
+          focusebuddy · Version {__APP_VERSION__}
         </span>
       </div>
       {confirmation && (
@@ -256,7 +256,7 @@ export function Settings({
           <p className="modal-intro">
             {confirmation === 'today'
               ? 'This ends your current session and removes today’s water, break records, and work time. Earlier activity and preferences are kept. This cannot be undone.'
-              : 'This ends your session and deletes all Posture Buddy history and preferences on this browser. Other applications are unaffected. This cannot be undone.'}
+              : 'This ends your session and deletes all focusebuddy history and preferences on this browser. Other applications are unaffected. This cannot be undone.'}
           </p>
           <div className="confirmation-actions">
             <button

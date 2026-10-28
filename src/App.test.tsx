@@ -13,6 +13,7 @@ import { freshData, transition } from './services/engine'
 import { load, save, STORAGE_KEY } from './services/storage'
 
 beforeEach(() => {
+  window.history.replaceState(null, '', '/')
   localStorage.clear()
   Object.defineProperty(navigator, 'locks', {
     configurable: true,
@@ -45,6 +46,43 @@ async function mount() {
 }
 
 describe('application interactions', () => {
+  it('updates the URL without adding duplicate tab history entries', async () => {
+    const user = userEvent.setup()
+    await mount()
+    const length = window.history.length
+    await user.click(screen.getByRole('button', { name: 'History' }))
+    expect(window.location.search).toBe('?tab=history')
+    expect(window.history.length).toBe(length + 1)
+    await user.click(screen.getByRole('button', { name: 'History' }))
+    expect(window.history.length).toBe(length + 1)
+    await user.click(screen.getByRole('button', { name: 'Today' }))
+    expect(window.location.search).toBe('?tab=today')
+  })
+
+  it('restores the tab from its URL on reload', () => {
+    window.history.replaceState(null, '', '/?tab=history')
+    const view = render(<App />)
+    expect(screen.getByRole('heading', { name: 'History' })).toBeTruthy()
+    view.unmount()
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'History' })).toBeTruthy()
+  })
+
+  it('restores previous and next tabs with browser Back and Forward', async () => {
+    const user = userEvent.setup()
+    await mount()
+    await user.click(screen.getByRole('button', { name: 'History' }))
+    await user.click(screen.getByRole('button', { name: 'Today' }))
+    act(() => window.history.back())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'History' }).getAttribute('aria-current')).toBe('page'))
+    expect(window.location.search).toBe('?tab=history')
+    act(() => window.history.back())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Today' }).getAttribute('aria-current')).toBe('page'))
+    expect(window.location.search).toBe('')
+    act(() => window.history.forward())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'History' }).getAttribute('aria-current')).toBe('page'))
+  })
+
   it('adds water, undoes it, and persists valid custom amounts', async () => {
     const user = userEvent.setup()
     await mount()
@@ -58,7 +96,22 @@ describe('application interactions', () => {
     await user.click(
       screen.getByRole('button', { name: 'Add custom water amount' }),
     )
-    expect(screen.getByRole('alert').textContent).toContain('1 to 2,000')
+    expect(
+      (
+        screen.getByRole('button', {
+          name: 'Add custom water amount',
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true)
+    expect(screen.queryByRole('alert')).toBeNull()
+    const customInput = screen.getByLabelText(
+      'Custom water amount in ml',
+    ) as HTMLInputElement
+    await user.click(customInput)
+    for (const invalid of ['-10', '1.5', '2e2', 'abcd', '2001', '20000']) {
+      await user.paste(invalid)
+      expect(customInput.value).toBe('')
+    }
     await user.clear(screen.getByLabelText('Custom water amount in ml'))
     await user.type(screen.getByLabelText('Custom water amount in ml'), '350')
     await user.click(
@@ -70,7 +123,7 @@ describe('application interactions', () => {
     const user = userEvent.setup()
     await mount()
     await user.click(screen.getByRole('button', { name: '250 ml' }))
-    await user.click(screen.getByRole('button', { name: /View water history/ }))
+    await user.click(screen.getByRole('button', { name: 'History' }))
     await user.click(
       screen.getByRole('button', { name: 'Edit 250 ml water entry' }),
     )

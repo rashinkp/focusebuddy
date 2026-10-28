@@ -47,10 +47,9 @@ export function History({
   return (
     <section className="card history-card" aria-labelledby="history-heading">
       <div className="history-heading">
-        <div>
-          <p className="eyebrow">YOUR WORKDAY, RECORDED</p>
-          <h2 id="history-heading">Activity history</h2>
-        </div>
+        <h2 id="history-heading" className="sr-only">
+          Activity history
+        </h2>
         <label className="date-label">
           Date
           <input
@@ -84,12 +83,8 @@ export function History({
           <div className="empty-icon">
             <Droplet size={22} strokeWidth={1.4} />
           </div>
-          <h3>A little space for your day.</h3>
-          <p>
-            Water entries and break outcomes will appear here.
-            <br />
-            Work time is included in the summary above.
-          </p>
+          <h3>No activity yet.</h3>
+          <p>Water entries and break outcomes will appear here.</p>
         </div>
       )}
       <ul className="history-list">

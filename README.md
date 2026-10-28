@@ -1,4 +1,4 @@
-# Posture Buddy
+# focusebuddy
 
 A private companion for a better workday: water logging, focused work sessions, and movement breaks. Built with React, TypeScript, Vite, Tailwind CSS, and Lucide. No account, backend, analytics, or camera access.
 
@@ -77,17 +77,17 @@ Timestamps use Unix epoch milliseconds. Display and daily grouping use the brows
 - The displayed date refreshes while open and when returning to the app. History is never deleted at midnight.
 - Changing timezone regroups existing history using the new timezone.
 
-Reset today ends the current session, removes water and break outcomes recorded today, and removes only today’s portions of work segments. Earlier history and settings are preserved. Clear all data removes all Posture Buddy records and settings from this browser origin. Both require separate confirmation and cannot be undone.
+Reset today ends the current session, removes water and break outcomes recorded today, and removes only today’s portions of work segments. Earlier history and settings are preserved. Clear all data removes all focusebuddy records and settings from this browser origin. Both require separate confirmation and cannot be undone.
 
 ## Storage and multiple tabs
 
-The sole persisted key is `posture-buddy:data`. Schema version 1 stores individual water entries, work sessions and segments, break outcomes, settings, current session state, a revision, and recently handled notification event IDs. Totals are derived from records. Future migrations belong in `src/services/storage.ts`.
+The sole persisted key remains `posture-buddy:data` for compatibility with existing saved activity. Schema version 1 stores individual water entries, work sessions and segments, break outcomes, settings, current session state, a revision, and recently handled notification event IDs. Totals are derived from records. Future migrations belong in `src/services/storage.ts`.
 
 Unreadable or unsupported stored data is left untouched and editing is disabled. Settings provides an explicit reset. If storage access or saving fails, the application continues in memory and warns that changes may not survive reload. Browser storage can be cleared and is not a backup. There is no export or cloud sync in this release.
 
 Where supported, a Web Lock elects one writable tab. Other tabs display synchronized data read-only and cannot schedule reminders or send notifications. Closing or reloading the owner releases its lock; the next tab reloads the latest saved state before becoming writable. Storage events synchronize followers.
 
-When safe coordination is unavailable, editing stays disabled until the user confirms that other Posture Buddy tabs are closed. Keep only one tab open in that fallback mode. If storage itself is unavailable, tabs cannot synchronize data.
+When safe coordination is unavailable, editing stays disabled until the user confirms that other focusebuddy tabs are closed. Keep only one tab open in that fallback mode. If storage itself is unavailable, tabs cannot synchronize data.
 
 ## Notifications and privacy
 

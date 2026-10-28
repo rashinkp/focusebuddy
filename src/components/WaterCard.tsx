@@ -11,7 +11,6 @@ export function WaterCard({
   addWater,
   undo,
   undoWater,
-  openHistory,
 }: {
   data: AppData
   now: number
@@ -19,10 +18,9 @@ export function WaterCard({
   addWater: (amount: number) => void
   undo: boolean
   undoWater: () => void
-  openHistory: () => void
 }) {
   const [custom, setCustom] = useState('')
-  const [error, setError] = useState('')
+  const canAdd = !disabled && validAmount(Number(custom))
   const total = data.water
     .filter((e) => inDay(e.timestamp, now))
     .reduce((n, e) => n + e.amountMl, 0)
@@ -30,20 +28,17 @@ export function WaterCard({
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const amount = Number(custom)
-    if (!validAmount(amount)) {
-      setError('Enter a whole number from 1 to 2,000 ml.')
-      return
-    }
+    if (!canAdd) return
     addWater(amount)
     setCustom('')
-    setError('')
   }
   return (
     <section className="card water-card" aria-labelledby="water-heading">
       <div className="card-heading">
-        <span className="section-label">
-          <Droplets size={17} /> STAY HYDRATED
-        </span>
+        <h2 id="water-heading">
+          <Droplets size={17} />
+          Water
+        </h2>
         <button
           className="icon-button"
           disabled={!undo || disabled}
@@ -53,15 +48,6 @@ export function WaterCard({
         >
           <Undo2 size={17} />
         </button>
-      </div>
-      <div className="water-top">
-        <div>
-          <h2 id="water-heading">A sip at a time.</h2>
-          <p className="muted">Keep water within reach.</p>
-        </div>
-        <div className="water-symbol" aria-hidden="true">
-          <Droplets size={31} strokeWidth={1.3} />
-        </div>
       </div>
       <div className="water-amount">
         <strong>{total.toLocaleString()}</strong>
@@ -79,8 +65,7 @@ export function WaterCard({
         <span style={{ width: `${Math.min(100, percent)}%` }} />
       </div>
       <div className="progress-caption">
-        <span>{percent}% of your personal goal</span>
-        <span>{(total / 1000).toFixed(2)} L today</span>
+        <span>{percent}% of daily goal</span>
       </div>
       <div className="quick-add">
         {[150, 250, 500].map((amount) => (
@@ -102,20 +87,23 @@ export function WaterCard({
         <div className="input-unit">
           <input
             id="water-amount"
-            type="number"
-            min="1"
-            max="2000"
-            step="1"
+            type="text"
             inputMode="numeric"
+            pattern="[0-9]*"
+            title="Enter a whole number from 1 to 2,000 ml"
             placeholder="Custom amount"
             value={custom}
             disabled={disabled}
             onChange={(e) => {
-              setCustom(e.target.value)
-              setError('')
+              const value = e.target.value
+              if (
+                value === '' ||
+                (/^[1-9][0-9]{0,3}$/.test(value) && validAmount(Number(value)))
+              ) {
+                setCustom(value)
+              }
             }}
-            aria-describedby={error ? 'water-error' : undefined}
-            aria-invalid={!!error}
+            aria-describedby="water-amount-hint"
           />
           <span>ml</span>
         </div>
@@ -123,19 +111,14 @@ export function WaterCard({
           type="submit"
           className="icon-button custom-add"
           aria-label="Add custom water amount"
-          disabled={disabled}
+          disabled={!canAdd}
         >
           <Plus size={20} />
         </button>
       </form>
-      {error && (
-        <p id="water-error" className="field-error" role="alert">
-          {error}
-        </p>
-      )}
-      <button className="text-button water-history" onClick={openHistory}>
-        View water history <span aria-hidden="true">↗</span>
-      </button>
+      <span id="water-amount-hint" className="sr-only">
+        Enter a whole number from 1 to 2,000 ml.
+      </span>
     </section>
   )
 }

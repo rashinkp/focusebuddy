@@ -1,32 +1,33 @@
 import { useState } from 'react'
 import {
   Activity,
-  ArrowRight,
   ArrowUpRight,
-  Check,
-  ChevronRight,
   Clock3,
   Coffee,
   Droplets,
-  Leaf,
-  LockKeyhole,
-  Settings2,
   ShieldCheck,
-  Sun,
-  X,
+  ArrowRight,
+  Check,
+  ChevronRight,
+  LockKeyhole,
+  Leaf,
+  Settings2,
   AlertCircle,
 } from 'lucide-react'
 import { useBuddy } from './hooks/useBuddy'
+import { useTabNavigation } from './hooks/useTabNavigation'
 import { SessionCard } from './components/SessionCard'
 import { WaterCard } from './components/WaterCard'
 import { History } from './components/History'
 import { Settings } from './components/Settings'
+import { CreatorPopover } from './components/CreatorPopover'
+import { Toast } from './components/Toast'
 import { duration, inDay, workDuration } from './utils/time'
 
 export default function App() {
   const buddy = useBuddy()
   const { data, now, canEdit } = buddy
-  const [tab, setTab] = useState<'today' | 'history'>('today')
+  const [tab, setTab] = useTabNavigation()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const todayWater = data.water.filter((e) => inDay(e.timestamp, now))
   const total = todayWater.reduce((n, e) => n + e.amountMl, 0)
@@ -59,13 +60,13 @@ export default function App() {
             e.preventDefault()
             setTab('today')
           }}
-          aria-label="Posture Buddy home"
+          aria-label="focusebuddy home"
         >
           <span className="brand-mark">
             <Activity size={21} strokeWidth={2} />
           </span>
           <span>
-            posture<span className="brand-light">buddy</span>
+            focuse<span className="brand-light">buddy</span>
             <span className="brand-period">.</span>
           </span>
         </a>
@@ -86,10 +87,6 @@ export default function App() {
           </button>
         </nav>
         <div className="header-right">
-          <span className="local-tag">
-            <span />
-            All yours. All local.
-          </span>
           <button
             className="icon-button settings-button"
             aria-label="Open settings"
@@ -117,7 +114,7 @@ export default function App() {
             <LockKeyhole size={18} />
             <span>
               {buddy.unsupported
-                ? 'This browser cannot coordinate tabs. Close every other Posture Buddy tab before continuing.'
+                ? 'This browser cannot coordinate tabs. Close every other focusebuddy tab before continuing.'
                 : 'Read-only while another tab is active. Close that tab to continue here.'}
             </span>
             {buddy.unsupported && (
@@ -129,30 +126,28 @@ export default function App() {
         )}
         <div className="page-heading">
           <div>
-            <p className="eyebrow">
-              <Sun size={14} />
-              {date}
-            </p>
             <h1>
-              {tab === 'today' ? greeting : 'Your days, at a glance.'}
-              <span className="heading-leaf" aria-hidden="true">
-                <Leaf size={29} strokeWidth={1.4} />
-              </span>
+              {tab === 'today' ? (
+                <>
+                  {greeting}
+                  <Leaf
+                    className="greeting-leaf"
+                    size={25}
+                    strokeWidth={1.4}
+                    aria-hidden="true"
+                  />
+                </>
+              ) : (
+                'History'
+              )}
             </h1>
-            <p>
-              {tab === 'today'
-                ? 'A little more balance for your workday.'
-                : 'Small moments add up. Here’s your record.'}
-            </p>
+            {tab === 'today' && (
+              <p className="greeting-subtitle">
+                A little more balance for your workday.
+              </p>
+            )}
           </div>
-          <div className="day-label">
-            <span className="subtle-dot" />
-            {data.active?.phase === 'paused'
-              ? 'A moment on pause'
-              : data.active
-                ? 'Your workday is in motion'
-                : 'A fresh start, whenever you’re ready'}
-          </div>
+          <p>{date}</p>
         </div>
         {tab === 'today' ? (
           <>
@@ -170,19 +165,9 @@ export default function App() {
                 addWater={buddy.addWater}
                 undo={!!buddy.undo}
                 undoWater={buddy.undoWater}
-                openHistory={() => setTab('history')}
               />
             </div>
-            <section
-              className="summary-section"
-              aria-labelledby="summary-heading"
-            >
-              <div className="section-title">
-                <h2 id="summary-heading">
-                  Your day, so far<span>Small steps count.</span>
-                </h2>
-                <span className="section-label">TODAY’S OVERVIEW</span>
-              </div>
+            <section className="summary-section" aria-label="Today’s activity">
               <div className="summary-grid">
                 <div className="summary-item">
                   <span className="stat-icon blue">
@@ -297,10 +282,13 @@ export default function App() {
           />
         )}
         <footer className="app-footer">
-          <span>
-            <ShieldCheck size={14} />
-            Private by design. Stored on this device.
-          </span>
+          <div className="footer-details">
+            <span className="footer-privacy">
+              <ShieldCheck size={14} />
+              Private by design. Stored on this device.
+            </span>
+            <CreatorPopover />
+          </div>
           <span>
             <span
               className={`subtle-dot ${buddy.warning ? 'amber-dot' : ''}`}
@@ -310,32 +298,10 @@ export default function App() {
               : buddy.owner
                 ? 'Local mode'
                 : 'Read-only mode'}
-            <span className="footer-divider" />v{__APP_VERSION__}
           </span>
         </footer>
       </main>
-      <div
-        className="toast-region"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {buddy.message && (
-          <div className="toast">
-            <span className="toast-check">
-              <Check size={16} />
-            </span>
-            <span>{buddy.message}</span>
-            <button
-              className="icon-button"
-              aria-label="Dismiss message"
-              onClick={() => buddy.setMessage('')}
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-      </div>
+      <Toast message={buddy.message} onDismiss={() => buddy.setMessage('')} />
       {settingsOpen && (
         <Settings
           settings={data.settings}

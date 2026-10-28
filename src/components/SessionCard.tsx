@@ -1,5 +1,4 @@
 import {
-  ArrowUpRight,
   Check,
   Coffee,
   Pause,
@@ -11,7 +10,7 @@ import {
 } from 'lucide-react'
 import type { AppData } from '../types'
 import type { Action } from '../services/engine'
-import { clock, MINUTE, workDuration } from '../utils/time'
+import { clock, duration, inDay, MINUTE, workDuration } from '../utils/time'
 
 export function SessionCard({
   data,
@@ -41,65 +40,67 @@ export function SessionCard({
     : data.settings.workIntervalMinutes * MINUTE
   const progress = active ? Math.min(1, Math.max(0, 1 - remaining / full)) : 0
   const session = data.sessions.find((s) => s.id === active?.sessionId)
-  const label =
-    phase === 'paused'
-      ? 'SESSION PAUSED'
-      : phase === 'due'
-        ? 'TIME TO MOVE'
-        : phase === 'ready'
-          ? 'NICE LITTLE RESET'
+  const completed = data.breaks.filter(
+    (e) => inDay(e.timestamp, now) && e.status === 'completed',
+  ).length
+  const title =
+    phase === 'due'
+      ? 'Time for a break'
+      : phase === 'ready'
+        ? 'Break complete'
+        : phase === 'paused'
+          ? 'Session paused'
           : breakPhase
-            ? 'TAKE A BREATHER'
-            : active
-              ? 'ONE THING AT A TIME'
-              : 'MAKE SPACE TO FOCUS'
+            ? 'On a break'
+            : 'Work session'
   return (
     <section
       className={`card session-card ${breakPhase || phase === 'due' ? 'break-theme' : ''}`}
       aria-labelledby="session-heading"
     >
       <div className="card-heading">
-        <span className="section-label">
-          <Timer size={17} /> WORK & MOVEMENT
-        </span>
-        <span
-          className={`status-tag ${active && phase !== 'paused' ? 'live' : ''}`}
-        >
-          <span />
-          {phase === 'paused'
-            ? 'Paused'
-            : active
-              ? 'In session'
-              : 'Ready when you are'}
-        </span>
+        <h2 id="session-heading">
+          <Timer size={17} />
+          {title}
+        </h2>
+        {(phase === 'working' || phase === 'due') && (
+          <button
+            className="icon-button"
+            disabled={disabled}
+            aria-label="Reset break countdown"
+            title="Reset break countdown"
+            onClick={() => dispatch({ type: 'reset-countdown' })}
+          >
+            <RotateCcw size={16} />
+          </button>
+        )}
       </div>
       <div className="session-content">
         <div className="session-copy">
-          <p className="eyebrow">{label}</p>
-          <h2 id="session-heading">
-            {phase === 'due' ? (
+          <h3>
+            {phase === 'paused' ? (
+              <>
+                Your time.
+                <br />
+                <span>Your pace.</span>
+              </>
+            ) : phase === 'due' ? (
               <>
                 A little room
                 <br />
-                to move.
+                <span>to move.</span>
               </>
             ) : phase === 'ready' ? (
               <>
                 Feel refreshed?
                 <br />
-                Ease back in.
+                <span>Ease back in.</span>
               </>
             ) : breakPhase ? (
               <>
                 Step away.
                 <br />
-                Come back clearer.
-              </>
-            ) : phase === 'paused' ? (
-              <>
-                Your time.
-                <br />
-                Your pace.
+                <span>Come back clearer.</span>
               </>
             ) : (
               <>
@@ -108,17 +109,17 @@ export function SessionCard({
                 <span>We’ll mind the breaks.</span>
               </>
             )}
-          </h2>
-          <p className="description">
-            {phase === 'due'
-              ? 'Stand up, stretch, or take a short walk. Start your break whenever you’re ready.'
-              : phase === 'ready'
-                ? 'Your break timer is done. Complete your break when you’re ready to return.'
-                : breakPhase
-                  ? 'Look away from the screen. Relax your shoulders. There’s no rush.'
-                  : phase === 'paused'
-                    ? 'Your timer is on hold. Pick up exactly where you left off.'
-                    : 'A gentle rhythm of focused work and small moments to reset.'}
+          </h3>
+          <p>
+            {phase === 'paused'
+              ? 'Pick up where you left off, whenever you’re ready.'
+              : phase === 'due'
+                ? 'Stand up, stretch, or take a short walk.'
+                : phase === 'ready'
+                  ? 'Return to work when you’re ready.'
+                  : breakPhase
+                    ? 'Look away. Let your shoulders soften.'
+                    : 'Focused work, with a little room to reset.'}
           </p>
         </div>
         <div
@@ -151,14 +152,16 @@ export function SessionCard({
             )}
             <span>
               {phase === 'due'
-                ? 'Your break is ready'
+                ? 'Stand up and stretch'
                 : phase === 'ready'
                   ? 'Ready to return'
                   : phase === 'paused'
                     ? 'Timer paused'
                     : breakPhase
-                      ? 'A moment for you'
-                      : 'Until your next break'}
+                      ? 'Break remaining'
+                      : active
+                        ? 'Until your next break'
+                        : `${data.settings.workIntervalMinutes} min work · ${data.settings.breakDurationMinutes} min break`}
             </span>
           </div>
         </div>
@@ -274,36 +277,14 @@ export function SessionCard({
       </div>
       <div className="session-bottom">
         <span>
-          {active && session ? (
-            <>
-              <span className="subtle-dot" />
-              {clock(workDuration(data, now, undefined, session))} worked this
-              session
-            </>
-          ) : (
-            <>
-              <Coffee size={14} />
-              {data.settings.workIntervalMinutes} min work{' '}
-              <span className="separator-dot">·</span>{' '}
-              {data.settings.breakDurationMinutes} min break
-            </>
-          )}
+          {active && session
+            ? `${clock(workDuration(data, now, undefined, session))} this session`
+            : `${duration(workDuration(data, now, now))} worked today`}
         </span>
-        {phase === 'working' || phase === 'due' ? (
-          <button
-            className="text-button small"
-            disabled={disabled}
-            onClick={() => dispatch({ type: 'reset-countdown' })}
-          >
-            <RotateCcw size={13} />
-            Reset break countdown
-          </button>
-        ) : (
-          <span className="small muted">
-            Small breaks. Better days.
-            <ArrowUpRight size={13} />
-          </span>
-        )}
+        <span>
+          {active ? `${duration(workDuration(data, now, now))} today · ` : ''}
+          {completed} {completed === 1 ? 'break' : 'breaks'} completed
+        </span>
       </div>
     </section>
   )

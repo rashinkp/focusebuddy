@@ -125,7 +125,7 @@ export function useBuddy() {
       return
     try {
       liveNotification.current = new Notification('A little room to move', {
-        body: 'Your movement break is ready. Come back to Posture Buddy when you’re ready.',
+        body: 'Your movement break is ready. Come back to focusebuddy when you’re ready.',
         tag: 'posture-buddy:break',
       })
     } catch {
