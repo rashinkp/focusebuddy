@@ -6,6 +6,8 @@ A personal focus, hydration, and movement companion. Track work sessions, log wa
 
 Built by [Rashin](https://rashinkp.vercel.app/) with React, TypeScript, Vite, Tailwind CSS, and Lucide.
 
+![focusebuddy dashboard showing the work session timer, water tracking, and daily activity](docs/images/focusebuddy-dashboard.png)
+
 ## What you can do
 
 - Start a work session, pause when needed, and take timed movement breaks.
