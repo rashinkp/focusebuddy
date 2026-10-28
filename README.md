@@ -1,6 +1,30 @@
 # focusebuddy
 
-A private companion for a better workday: water logging, focused work sessions, and movement breaks. Built with React, TypeScript, Vite, Tailwind CSS, and Lucide. No account, backend, analytics, or camera access.
+A personal focus, hydration, and movement companion. Track work sessions, log water, and make room for breaks in a responsive interface that keeps activity on your device.
+
+Built by [Rashin](https://rashinkp.vercel.app/) with React, TypeScript, Vite, Tailwind CSS, and Lucide.
+
+## What you can do
+
+- Start a work session, pause when needed, and take timed movement breaks.
+- Log water with quick amounts or a custom entry, then edit, delete, or undo additions.
+- Review activity for today, yesterday, the previous week or month, or a custom date range.
+- Adjust your rhythm with automatically saved preferences and optional desktop notifications.
+
+No account or backend is required. Activity stays in your browser, with no analytics, camera access, or cloud AI service.
+
+## Engineering choices
+
+This project puts most of its complexity into predictable behavior:
+
+- **Timestamp-based timers.** Work segments and deadlines drive calculations, so delayed UI callbacks do not change elapsed time. Recovery pauses uncertain time after a long absence.
+- **Explicit state transitions.** A pure session engine handles work, pauses, break reminders, completion, interruption, and resets separately from the UI.
+- **Calendar-aware history.** Work totals use overlap with local date boundaries, including midnight crossings and daylight-saving changes.
+- **Coordinated tabs.** Web Locks elect one writable tab; storage events synchronize followers and prevent duplicate reminders.
+- **Resilient storage.** Stored records are validated, unreadable data is preserved, and storage failures have an in-memory fallback.
+- **Considered interactions.** Keyboard navigation, native dialogs, background scroll locking, subtle entrance effects, stacked toasts, and reduced-motion support are built into the interface.
+
+The automated suite currently includes **67 tests across 10 files**, covering the session engine, date calculations, storage and ownership behavior, and user interactions.
 
 ## Run locally
 
@@ -109,10 +133,12 @@ The app never requests camera access and does not collect telemetry, upload acti
 
 Tests cover state transitions, input validation, pause exclusion, break outcomes, recovery, midnight splitting, DST and timezone changes, persistence failures, resets, notification deduplication, tab synchronization, and primary user interactions.
 
-## Future posture estimation
+## Scope and next steps
 
-The next step is a separate opt-in prototype using MediaPipe Pose Landmarker with client-side inference. Evaluate landmark visibility and performance on a MacBook before connecting it to reminders.
+This release is a browser-based focus and wellness tracker. It does not measure posture or hydration status. It has no cloud sync, data export, service worker, or installable offline mode.
 
-Keep camera capture, landmark inference, posture estimation, reminder policy, and UI separate. Require explicit consent, handle denied permission, provide a persistent camera-off control, and stop camera tracks when disabled. Do not upload, record, or persist video frames or biometric data.
+Potential next steps include activity export and a separately evaluated, opt-in posture prototype. Camera-based features are not part of this release.
 
-Calibrate against the user’s baseline and account for camera angle, lighting, position, and confidence. Use sustained deviations, confidence thresholds, debouncing, cooldowns, and adjustable sensitivity. Suppress brief normal movement and avoid diagnosing posture or claiming to measure spinal alignment from a single front-facing camera.
+## Author
+
+[Rashin’s portfolio](https://rashinkp.vercel.app/) · [GitHub](https://github.com/rashinkp) · [LinkedIn](https://www.linkedin.com/in/rashinkp)
