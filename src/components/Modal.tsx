@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { lockPageScroll } from '../utils/scrollLock'
 
 export function Modal({
   title,
@@ -16,11 +17,13 @@ export function Modal({
   useEffect(() => {
     const dialog = ref.current!
     const previousFocus = document.activeElement
+    const unlock = lockPageScroll()
     dialog.showModal()
     return () => {
       dialog.close()
+      unlock()
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
-        previousFocus.focus()
+        previousFocus.focus({ preventScroll: true })
     }
   }, [])
   return (

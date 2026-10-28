@@ -26,7 +26,7 @@ npm run preview
 ## Features
 
 - Customizable daily water goal, quick additions, custom amounts, individual corrections and deletion, and undo of the latest addition in the current tab.
-- Date-selectable water and break history, with daily work totals.
+- History presets for Today, Yesterday, the previous Monday–Sunday week, and the previous calendar month; one custom calendar selects an inclusive start–end range. The selected period appears in the History header and filters water, break outcomes, and work totals.
 - Timestamp-based work sessions with pause, resume, end, and refresh recovery.
 - Coordinated movement breaks with countdowns, snooze, skip, explicit completion, and interruption records.
 - In-app reminders and optional desktop notifications.
@@ -54,7 +54,7 @@ The default rhythm is 45 minutes of work followed by a 5-minute break. Work inte
 - End break early records an interrupted break and starts a full work interval.
 - End session stops scheduling. An unfinished break is recorded as interrupted, even if its countdown has elapsed but it has not been explicitly completed.
 - Reset break countdown is available while working or when a break is due. It starts a full interval without clearing accumulated work or recording a break.
-- Changing the work interval applies at the next full interval or explicit countdown reset. Changing break duration applies to the next break. Water goals update immediately. Notification changes apply immediately; numeric preferences apply when saved.
+- Changing the work interval applies at the next full interval or explicit countdown reset. Changing break duration applies to the next break. Water goals update immediately. Notification changes apply immediately; valid numeric preferences save automatically after a short pause in typing, on leaving a field, or when closing Settings. Incomplete or invalid values never replace saved preferences and revert when leaving the field.
 
 Durations come from timestamps and recorded work segments, not interval callback counts. UI callbacks refresh the display approximately once per second.
 

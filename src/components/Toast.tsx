@@ -1,53 +1,140 @@
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react'
 import { Check, X } from 'lucide-react'
+import type { ToastMessage } from '../hooks/useToasts'
 
-export function Toast({
+function ToastCard({
   message,
   onDismiss,
+  covered,
 }: {
-  message: string
-  onDismiss: () => void
+  message: ToastMessage
+  onDismiss: (id: string) => void
+  covered: boolean
 }) {
-  const [lastMessage, setLastMessage] = useState(message)
+  const [closing, setClosing] = useState(false)
   const dismissRef = useRef(onDismiss)
   useEffect(() => {
     dismissRef.current = onDismiss
   }, [onDismiss])
   useEffect(() => {
-    if (message) setLastMessage(message)
-  }, [message])
-  useEffect(() => {
-    if (!message) return
-    const timeout = window.setTimeout(() => dismissRef.current(), 3000)
+    const timeout = window.setTimeout(
+      () => setClosing(true),
+      Math.max(0, 3000 - (Date.now() - message.createdAt)),
+    )
     return () => window.clearTimeout(timeout)
-  }, [message])
-
-  // Keep the surface and its last text mounted until the exit transition finishes.
+  }, [message.createdAt])
+  useEffect(() => {
+    if (!closing) return
+    const reduced = window.matchMedia?.(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+    const timeout = window.setTimeout(
+      () => dismissRef.current(message.id),
+      reduced ? 0 : 280,
+    )
+    return () => window.clearTimeout(timeout)
+  }, [closing, message.id])
   return (
     <div
-      className="toast-region"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
+      className="toast"
+      data-open={!closing}
+      aria-hidden={closing || covered}
+      inert={closing || covered}
     >
-      <div
-        className="toast"
-        data-open={!!message}
-        aria-hidden={!message}
-        inert={!message}
+      <span className="toast-check">
+        <Check size={16} />
+      </span>
+      <span>{message.text}</span>
+      <button
+        className="icon-button"
+        aria-label="Dismiss message"
+        onClick={() => setClosing(true)}
+        disabled={closing || covered}
       >
-        <span className="toast-check">
-          <Check size={16} />
-        </span>
-        <span>{message || lastMessage}</span>
-        <button
-          className="icon-button"
-          aria-label="Dismiss message"
-          onClick={onDismiss}
-          disabled={!message}
-        >
-          <X size={16} />
-        </button>
+        <X size={16} />
+      </button>
+    </div>
+  )
+}
+
+export function Toast({
+  messages,
+  onDismiss,
+}: {
+  messages: ToastMessage[]
+  onDismiss: (id: string) => void
+}) {
+  const stack = useRef<HTMLDivElement>(null)
+  const [expanded, setExpanded] = useState(false)
+  const [height, setHeight] = useState(64)
+  const newestFirst = [...messages].reverse()
+  useLayoutEffect(() => {
+    const cards = stack.current?.querySelectorAll<HTMLElement>('.toast')
+    if (!cards?.length) return
+    const measure = () =>
+      setHeight(Math.max(...Array.from(cards, (card) => card.offsetHeight)))
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    cards.forEach((card) => observer.observe(card))
+    return () => observer.disconnect()
+  }, [messages])
+  return (
+    <div className="toast-region">
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {newestFirst[0]?.text ?? ''}
+      </span>
+      <div
+        ref={stack}
+        className="toast-stack"
+        data-expanded={expanded}
+        data-populated={messages.length > 0}
+        style={
+          {
+            '--toast-height': `${height}px`,
+            '--toast-count': messages.length,
+          } as CSSProperties
+        }
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => {
+          if (!stack.current?.contains(document.activeElement))
+            setExpanded(false)
+        }}
+        onFocusCapture={() => setExpanded(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setExpanded(false)
+        }}
+      >
+        {newestFirst.map((message, index) => (
+          <div
+            key={message.id}
+            className="toast-slot"
+            style={
+              {
+                '--toast-index': index,
+                zIndex: newestFirst.length - index,
+              } as CSSProperties
+            }
+          >
+            <ToastCard
+              message={message}
+              onDismiss={onDismiss}
+              covered={!expanded && index > 0}
+            />
+          </div>
+        ))}
       </div>
     </div>
   )

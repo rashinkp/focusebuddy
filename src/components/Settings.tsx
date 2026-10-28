@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
-import { Bell, Check, ShieldCheck, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Bell, ShieldCheck, Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
 import type { Settings as Preferences } from '../types'
-import { validSettings, type Action } from '../services/engine'
+import { type Action } from '../services/engine'
+import { usePreferenceDraft } from '../hooks/usePreferenceDraft'
 
 export function Settings({
   settings,
@@ -25,32 +26,24 @@ export function Settings({
   notify: (message: string) => void
   invalidateUndo: () => void
 }) {
-  const [draft, setDraft] = useState(settings)
-  const [error, setError] = useState('')
+  const { draft, change, blur, flush, setNotifications } = usePreferenceDraft(
+    settings,
+    canEdit,
+    dispatch,
+  )
+  const close = () => {
+    flush()
+    onClose()
+  }
   const [confirmation, setConfirmation] = useState<'today' | 'all' | null>(null)
   const [permission, setPermission] = useState(
     'Notification' in window ? Notification.permission : 'unsupported',
   )
   const [pending, setPending] = useState(false)
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    if (!validSettings(draft)) {
-      setError('Use whole numbers within the ranges shown below.')
-      return
-    }
-    dispatch({ type: 'settings', settings: draft })
-    notify('Preferences saved.')
-    onClose()
-  }
   const toggleNotifications = async () => {
     if (!canEdit) return
     if (draft.notificationsEnabled) {
-      const next = { ...draft, notificationsEnabled: false }
-      setDraft(next)
-      dispatch({
-        type: 'settings',
-        settings: { ...settings, notificationsEnabled: false },
-      })
+      setNotifications(false)
       return
     }
     if (!('Notification' in window)) return
@@ -62,11 +55,7 @@ export function Settings({
           : Notification.permission
       setPermission(result)
       const enabled = result === 'granted'
-      setDraft((current) => ({ ...current, notificationsEnabled: enabled }))
-      dispatch({
-        type: 'settings',
-        settings: { ...settings, notificationsEnabled: enabled },
-      })
+      setNotifications(enabled)
       if (!enabled)
         notify(
           'Desktop notifications are unavailable. In-app reminders are still enabled.',
@@ -81,11 +70,11 @@ export function Settings({
     }
   }
   return (
-    <Modal title="Make it your own" onClose={onClose}>
-      <p className="modal-intro">
+    <Modal title="Make it your own" onClose={close}>
+      <p className="modal-intro settings-intro">
         A rhythm that fits your day. All preferences stay on this device.
       </p>
-      <form onSubmit={submit} noValidate>
+      <div className="preferences-form">
         <fieldset disabled={!canEdit || pending} className="settings-fields">
           <legend className="sr-only">Wellness preferences</legend>
           <label className="setting-row">
@@ -102,11 +91,9 @@ export function Settings({
                 step="1"
                 value={draft.dailyWaterGoalMl || ''}
                 onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    dailyWaterGoalMl: Number(e.target.value),
-                  })
+                  change('dailyWaterGoalMl', Number(e.target.value))
                 }
+                onBlur={() => blur('dailyWaterGoalMl')}
               />
               <span>ml</span>
             </div>
@@ -125,11 +112,9 @@ export function Settings({
                 step="1"
                 value={draft.workIntervalMinutes || ''}
                 onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    workIntervalMinutes: Number(e.target.value),
-                  })
+                  change('workIntervalMinutes', Number(e.target.value))
                 }
+                onBlur={() => blur('workIntervalMinutes')}
               />
               <span>min</span>
             </div>
@@ -148,11 +133,9 @@ export function Settings({
                 step="1"
                 value={draft.breakDurationMinutes || ''}
                 onChange={(e) =>
-                  setDraft({
-                    ...draft,
-                    breakDurationMinutes: Number(e.target.value),
-                  })
+                  change('breakDurationMinutes', Number(e.target.value))
                 }
+                onBlur={() => blur('breakDurationMinutes')}
               />
               <span>min</span>
             </div>
@@ -165,13 +148,11 @@ export function Settings({
                   Desktop notifications
                 </strong>
                 <small>
-                  {permission === 'granted'
-                    ? 'Browser permission granted.'
-                    : permission === 'denied'
-                      ? 'Blocked in browser settings. In-app reminders remain on.'
-                      : permission === 'default'
-                        ? 'Optional. Permission is requested only when enabled.'
-                        : 'Unavailable in this browser. In-app reminders remain on.'}
+                  {permission === 'denied'
+                    ? 'Blocked by your browser. Enable notifications in browser settings.'
+                    : permission === 'unsupported' || permission === 'unavailable'
+                      ? 'Unavailable in this browser.'
+                      : 'Break reminders while the app is open.'}
                 </small>
               </span>
               <button
@@ -192,25 +173,31 @@ export function Settings({
                 <span />
               </button>
             </div>
-            <p className="fine-print">
-              Keep focusebuddy open for reminders. Browsers may delay timers
-              and notifications when suspended or closed. Notification changes
-              apply immediately.
-            </p>
           </div>
         </fieldset>
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="settings-save">
-          <button className="button primary" disabled={!canEdit || pending}>
-            <Check size={16} />
-            Save preferences
+      </div>
+      <div className="data-actions">
+        <h3>Your data</h3>
+        <div className="data-action-buttons">
+          <button
+            className="button secondary"
+            disabled={!canEdit}
+            onClick={() => setConfirmation('today')}
+          >
+            Reset today’s activity
+          </button>
+          <button
+            className="button danger-outline"
+            disabled={!owner}
+            onClick={() => setConfirmation('all')}
+          >
+            <Trash2 size={14} />
+            {blocked
+              ? 'Reset unreadable saved data'
+              : 'Clear all application data'}
           </button>
         </div>
-      </form>
+      </div>
       <div className="privacy-note">
         <ShieldCheck size={21} />
         <div>
@@ -221,29 +208,9 @@ export function Settings({
           </p>
         </div>
       </div>
-      <div className="data-actions">
-        <h3>Your data</h3>
-        <button
-          className="text-button"
-          disabled={!canEdit}
-          onClick={() => setConfirmation('today')}
-        >
-          Reset today’s activity
-        </button>
-        <button
-          className="text-button danger-text"
-          disabled={!owner}
-          onClick={() => setConfirmation('all')}
-        >
-          <Trash2 size={14} />
-          {blocked
-            ? 'Reset unreadable saved data'
-            : 'Clear all application data'}
-        </button>
-        <span className="fine-print">
-          focusebuddy · Version {__APP_VERSION__}
-        </span>
-      </div>
+      <span className="fine-print settings-version">
+        focusebuddy · Version {__APP_VERSION__}
+      </span>
       {confirmation && (
         <Modal
           title={

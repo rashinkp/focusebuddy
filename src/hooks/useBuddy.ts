@@ -9,6 +9,7 @@ import {
 } from '../services/storage'
 import { claimOwnership } from '../services/ownership'
 import type { AppData, WaterEntry } from '../types'
+import { useToasts } from './useToasts'
 
 export function useBuddy() {
   const [initial] = useState(load)
@@ -19,9 +20,10 @@ export function useBuddy() {
   const blockedRef = useRef(initial.blocked)
   const [owner, setOwner] = useState(false)
   const ownerRef = useRef(false)
+  const [ownershipPending, setOwnershipPending] = useState(true)
   const [unsupported, setUnsupported] = useState(false)
   const [now, setNow] = useState(Date.now())
-  const [message, setMessage] = useState('')
+  const { messages, notify: setMessage, dismiss: dismissMessage } = useToasts()
   const [undo, setUndo] = useState<WaterEntry | null>(null)
   const liveNotification = useRef<Notification | null>(null)
   const replace = useCallback((next: AppData) => {
@@ -53,7 +55,14 @@ export function useBuddy() {
   )
 
   useEffect(() => {
+    // Allow the previous document's lock to release during a normal refresh.
+    // Editing remains disabled while ownership is being established.
+    const pendingTimeout = window.setTimeout(
+      () => setOwnershipPending(false),
+      350,
+    )
     const acquire = () => {
+      window.clearTimeout(pendingTimeout)
       const result = load()
       blockedRef.current = result.blocked
       setBlocked(result.blocked)
@@ -61,6 +70,7 @@ export function useBuddy() {
       replace(result.data)
       ownerRef.current = true
       setOwner(true)
+      setOwnershipPending(false)
       if (!result.blocked) {
         const timestamp = Date.now()
         if (isRecovering(result.data.active, timestamp))
@@ -69,7 +79,11 @@ export function useBuddy() {
         if (next !== result.data) commit(next)
       }
     }
-    const release = claimOwnership(acquire, () => setUnsupported(true))
+    const release = claimOwnership(acquire, () => {
+      window.clearTimeout(pendingTimeout)
+      setUnsupported(true)
+      setOwnershipPending(false)
+    })
     const sync = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY || ownerRef.current) return
       const result = load()
@@ -81,6 +95,7 @@ export function useBuddy() {
     }
     window.addEventListener('storage', sync)
     return () => {
+      window.clearTimeout(pendingTimeout)
       ownerRef.current = false
       release()
       window.removeEventListener('storage', sync)
@@ -199,6 +214,7 @@ export function useBuddy() {
     setBlocked(result.blocked)
     ownerRef.current = true
     setOwner(true)
+    setOwnershipPending(false)
     if (!result.blocked)
       commit(transition(result.data, { type: 'tick' }, Date.now()))
   }
@@ -208,9 +224,11 @@ export function useBuddy() {
     warning,
     blocked,
     owner,
+    ownershipPending,
     unsupported,
     canEdit: owner && !blocked,
-    message,
+    messages,
+    dismissMessage,
     setMessage,
     dispatch,
     addWater,

@@ -13,6 +13,7 @@ import { freshData, transition } from './services/engine'
 import { load, save, STORAGE_KEY } from './services/storage'
 
 beforeEach(() => {
+  vi.stubGlobal('scrollTo', vi.fn())
   window.history.replaceState(null, '', '/')
   localStorage.clear()
   Object.defineProperty(navigator, 'locks', {
@@ -74,13 +75,31 @@ describe('application interactions', () => {
     await user.click(screen.getByRole('button', { name: 'History' }))
     await user.click(screen.getByRole('button', { name: 'Today' }))
     act(() => window.history.back())
-    await waitFor(() => expect(screen.getByRole('button', { name: 'History' }).getAttribute('aria-current')).toBe('page'))
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('button', { name: 'History' })
+          .getAttribute('aria-current'),
+      ).toBe('page'),
+    )
     expect(window.location.search).toBe('?tab=history')
     act(() => window.history.back())
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Today' }).getAttribute('aria-current')).toBe('page'))
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('button', { name: 'Today' })
+          .getAttribute('aria-current'),
+      ).toBe('page'),
+    )
     expect(window.location.search).toBe('')
     act(() => window.history.forward())
-    await waitFor(() => expect(screen.getByRole('button', { name: 'History' }).getAttribute('aria-current')).toBe('page'))
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('button', { name: 'History' })
+          .getAttribute('aria-current'),
+      ).toBe('page'),
+    )
   })
 
   it('adds water, undoes it, and persists valid custom amounts', async () => {
@@ -170,7 +189,9 @@ describe('application interactions', () => {
       screen.getByRole('spinbutton', { name: 'Daily water goal' }),
       '2500',
     )
-    await user.click(screen.getByRole('button', { name: 'Save preferences' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Close Make it your own' }),
+    )
     view.unmount()
     await mount()
     expect(load().data.settings.dailyWaterGoalMl).toBe(2500)
@@ -196,7 +217,35 @@ describe('application interactions', () => {
     expect(load().data.water).toHaveLength(0)
     expect(load().data.settings.dailyWaterGoalMl).toBe(2000)
   })
+  it('does not flash the multi-tab warning while a reload acquires ownership', () => {
+    vi.useFakeTimers()
+    let acquire: (() => Promise<void>) | undefined
+    Object.defineProperty(navigator, 'locks', {
+      configurable: true,
+      value: {
+        request: vi.fn((_name, _options, callback) => {
+          acquire = callback
+          return new Promise(() => {})
+        }),
+      },
+    })
+    render(<App />)
+    expect(screen.queryByText(/Read-only while another tab/)).toBeNull()
+    act(() => vi.advanceTimersByTime(100))
+    expect(screen.queryByText(/Read-only while another tab/)).toBeNull()
+    act(() => {
+      void acquire?.()
+    })
+    act(() => vi.advanceTimersByTime(1000))
+    expect(screen.queryByText(/Read-only while another tab/)).toBeNull()
+    expect(
+      (screen.getByRole('button', { name: '250 ml' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false)
+  })
+
   it('keeps secondary tabs read-only and updates from storage events', async () => {
+    vi.useFakeTimers()
     Object.defineProperty(navigator, 'locks', {
       configurable: true,
       value: { request: vi.fn(() => new Promise(() => {})) },
@@ -206,6 +255,9 @@ describe('application interactions', () => {
       (screen.getByRole('button', { name: '250 ml' }) as HTMLButtonElement)
         .disabled,
     ).toBe(true)
+    expect(screen.queryByText(/Read-only while another tab/)).toBeNull()
+    act(() => vi.advanceTimersByTime(350))
+    expect(screen.getByText(/Read-only while another tab/)).toBeTruthy()
     const data = transition(
       freshData(),
       { type: 'water-add', amount: 500, id: 'other-tab' },
@@ -233,7 +285,7 @@ describe('application interactions', () => {
       screen.getByRole('switch', { name: 'Desktop notifications' }),
     )
     await waitFor(() =>
-      expect(screen.getByText(/Blocked in browser settings/)).toBeTruthy(),
+      expect(screen.getByText(/Enable notifications in browser settings/)).toBeTruthy(),
     )
     expect(requestPermission).toHaveBeenCalledTimes(1)
     expect(load().data.settings.notificationsEnabled).toBe(false)

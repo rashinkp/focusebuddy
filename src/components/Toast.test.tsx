@@ -1,35 +1,65 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { act, cleanup, render } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Toast } from './Toast'
+import { useToasts } from '../hooks/useToasts'
 
-afterEach(() => { cleanup(); vi.useRealTimers() })
-
-it('dismisses after three seconds despite parent rerenders and retains exit content', () => {
-  vi.useFakeTimers()
-  const first = vi.fn()
-  const latest = vi.fn()
-  const view = render(<Toast message="Water added" onDismiss={first} />)
-  act(() => vi.advanceTimersByTime(2000))
-  view.rerender(<Toast message="Water added" onDismiss={latest} />)
-  act(() => vi.advanceTimersByTime(999))
-  expect(latest).not.toHaveBeenCalled()
-  act(() => vi.advanceTimersByTime(1))
-  expect(latest).toHaveBeenCalledOnce()
-  expect(first).not.toHaveBeenCalled()
-  view.rerender(<Toast message="" onDismiss={latest} />)
-  expect(view.container.querySelector('.toast')?.getAttribute('data-open')).toBe('false')
-  expect(view.container.querySelector('.toast')?.textContent).toContain('Water added')
+function Harness() {
+  const { messages, notify, dismiss } = useToasts()
+  return (
+    <>
+      <button onClick={() => notify('Water added')}>Notify</button>
+      <Toast messages={messages} onDismiss={dismiss} />
+    </>
+  )
+}
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
 })
 
-it('restarts the delay for a replacement message and cancels it on unmount', () => {
+it('stacks repeated messages and expires each after its own three seconds', () => {
   vi.useFakeTimers()
-  const dismiss = vi.fn()
-  const view = render(<Toast message="First message" onDismiss={dismiss} />)
-  act(() => vi.advanceTimersByTime(2000))
-  view.rerender(<Toast message="New message" onDismiss={dismiss} />)
-  act(() => vi.advanceTimersByTime(2999))
-  expect(dismiss).not.toHaveBeenCalled()
-  view.unmount()
+  const view = render(<Harness />)
+  fireEvent.click(screen.getByText('Notify'))
   act(() => vi.advanceTimersByTime(1000))
-  expect(dismiss).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByText('Notify'))
+  expect(view.container.querySelectorAll('.toast')).toHaveLength(2)
+  act(() => vi.advanceTimersByTime(2000))
+  expect(
+    view.container.querySelectorAll('.toast[data-open="false"]'),
+  ).toHaveLength(1)
+  expect(
+    view.container.querySelectorAll('.toast[data-open="true"]'),
+  ).toHaveLength(1)
+  act(() => vi.advanceTimersByTime(280))
+  expect(view.container.querySelectorAll('.toast')).toHaveLength(1)
+  act(() => vi.advanceTimersByTime(720))
+  expect(
+    view.container.querySelectorAll('.toast[data-open="false"]'),
+  ).toHaveLength(1)
+  act(() => vi.advanceTimersByTime(280))
+  expect(view.container.querySelectorAll('.toast')).toHaveLength(0)
+})
+
+it('dismisses one toast without dismissing the others and expands on hover', () => {
+  const view = render(<Harness />)
+  fireEvent.click(screen.getByText('Notify'))
+  fireEvent.click(screen.getByText('Notify'))
+  fireEvent.mouseEnter(view.container.querySelector('.toast-stack')!)
+  expect(
+    screen.getAllByRole('button', { name: 'Dismiss message' }),
+  ).toHaveLength(2)
+  fireEvent.click(screen.getAllByRole('button', { name: 'Dismiss message' })[0])
+  expect(
+    view.container.querySelectorAll('.toast[data-open="true"]'),
+  ).toHaveLength(1)
+})
+
+it('bounds the stack and clears pending timers when unmounted', () => {
+  vi.useFakeTimers()
+  const view = render(<Harness />)
+  for (let i = 0; i < 6; i++) fireEvent.click(screen.getByText('Notify'))
+  expect(view.container.querySelectorAll('.toast')).toHaveLength(3)
+  view.unmount()
+  expect(vi.getTimerCount()).toBe(0)
 })

@@ -24,6 +24,15 @@ export function workDuration(
 ) {
   const [start, end] =
     day === undefined ? [-Infinity, Infinity] : dayBounds(day)
+  return workDurationBetween(data, now, start, end, session)
+}
+export function workDurationBetween(
+  data: AppData,
+  now: number,
+  start: number,
+  end: number,
+  session?: WorkSession,
+) {
   const overlap = (a: number, b: number) =>
     Math.max(0, Math.min(b, end) - Math.max(a, start))
   const sessions = session ? [session] : data.sessions

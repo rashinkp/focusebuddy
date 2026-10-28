@@ -19,6 +19,8 @@ import { useTabNavigation } from './hooks/useTabNavigation'
 import { SessionCard } from './components/SessionCard'
 import { WaterCard } from './components/WaterCard'
 import { History } from './components/History'
+import { HistoryDatePicker } from './components/HistoryDatePicker'
+import { historyRange, type HistoryFilter } from './utils/historyDates'
 import { Settings } from './components/Settings'
 import { CreatorPopover } from './components/CreatorPopover'
 import { Toast } from './components/Toast'
@@ -29,6 +31,10 @@ export default function App() {
   const { data, now, canEdit } = buddy
   const [tab, setTab] = useTabNavigation()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>({
+    preset: 'today',
+  })
+  const selectedHistoryRange = historyRange(historyFilter, now)
   const todayWater = data.water.filter((e) => inDay(e.timestamp, now))
   const total = todayWater.reduce((n, e) => n + e.amountMl, 0)
   const completed = data.breaks.filter(
@@ -109,7 +115,7 @@ export default function App() {
             </button>
           </div>
         )}
-        {!buddy.owner && (
+        {!buddy.owner && !buddy.ownershipPending && (
           <div className="notice" role="status">
             <LockKeyhole size={18} />
             <span>
@@ -124,7 +130,7 @@ export default function App() {
             )}
           </div>
         )}
-        <div className="page-heading">
+        <div key={tab} className="page-heading">
           <div>
             <h1>
               {tab === 'today' ? (
@@ -147,7 +153,15 @@ export default function App() {
               </p>
             )}
           </div>
-          <p>{date}</p>
+          {tab === 'today' ? (
+            <p>{date}</p>
+          ) : (
+            <HistoryDatePicker
+              value={historyFilter}
+              now={now}
+              onChange={setHistoryFilter}
+            />
+          )}
         </div>
         {tab === 'today' ? (
           <>
@@ -273,6 +287,8 @@ export default function App() {
           </>
         ) : (
           <History
+            key={`${selectedHistoryRange.start}:${selectedHistoryRange.end}`}
+            range={selectedHistoryRange}
             data={data}
             now={now}
             disabled={!canEdit}
@@ -295,13 +311,15 @@ export default function App() {
             />
             {buddy.warning
               ? 'Storage needs attention'
-              : buddy.owner
-                ? 'Local mode'
-                : 'Read-only mode'}
+              : buddy.ownershipPending
+                ? 'Checking local mode…'
+                : buddy.owner
+                  ? 'Local mode'
+                  : 'Read-only mode'}
           </span>
         </footer>
       </main>
-      <Toast message={buddy.message} onDismiss={() => buddy.setMessage('')} />
+      <Toast messages={buddy.messages} onDismiss={buddy.dismissMessage} />
       {settingsOpen && (
         <Settings
           settings={data.settings}
