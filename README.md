@@ -28,7 +28,7 @@ This project puts most of its complexity into predictable behavior:
 - **Resilient storage.** Stored records are validated, unreadable data is preserved, and storage failures have an in-memory fallback.
 - **Considered interactions.** Keyboard navigation, native dialogs, background scroll locking, subtle entrance effects, stacked toasts, and reduced-motion support are built into the interface.
 
-The automated suite currently includes **86 tests across 12 files**, covering the session engine, date calculations, storage and ownership behavior, and user interactions.
+The automated suite currently includes **101 tests across 15 files**, covering the session engine, date calculations, storage and ownership behavior, and user interactions.
 
 ## Run locally
 
@@ -97,7 +97,7 @@ The browser cannot reliably distinguish sleep, closure, and throttling. Prolonge
 
 ## Tasks and reminders
 
-Add a task on Today with Enter or the Add button. The calendar button opens an optional reminder picker with Later today, Tomorrow, and Custom date choices. Each task supports one reminder. The row’s action menu edits the title or reminder and deletes the task. Completed tasks are tucked into a collapsible group and can be reopened.
+Add a task on Today with Enter or the Add button. The calendar button opens an anchored reminder popover with direct calendar date selection. Choose a date in the compact calendar, then select a time from the scrollable five-minute AM/PM list to apply immediately. Clicking outside or pressing Escape before choosing a time cancels the draft. Each task supports one reminder. The row’s action menu edits the title or reminder and deletes the task. Completed tasks are tucked into a collapsible group and can be reopened.
 
 Tasks persist across calendar days. Scheduled tasks appear first in reminder order, followed by unscheduled tasks. Completing a task cancels its reminder; reopening it does not silently schedule another notification. Explicitly changing its reminder creates a new schedule.
 

@@ -2011,7 +2011,7 @@ input::placeholder {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .tasks-heading h2 {
   display: flex;
@@ -2114,9 +2114,9 @@ input::placeholder {
   display: flex;
   align-items: center;
   gap: 4px;
-  min-height: 60px;
+  min-height: 40px;
   border-bottom: 1px solid #ffffff09;
-  padding: 6px 0;
+  padding: 3px 0;
 }
 .task-row:last-child {
   border-bottom: 0;
@@ -2157,8 +2157,8 @@ input::placeholder {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 6px 0;
+  gap: 3px;
+  padding: 0;
 }
 .task-title {
   font-size: 14px;
@@ -2184,7 +2184,7 @@ input::placeholder {
   position: relative;
   align-self: center;
 }
-.task-row-menu summary {
+.task-menu-trigger {
   list-style: none;
   display: grid;
   place-items: center;
@@ -2194,16 +2194,16 @@ input::placeholder {
   border-radius: 8px;
   color: #88978d;
 }
-.task-row-menu summary::-webkit-details-marker,
+.task-menu-trigger::-webkit-details-marker,
 .tasks-completed summary::-webkit-details-marker {
   display: none;
 }
-.task-row-menu summary:hover,
-.task-row-menu[open] summary {
+.task-menu-trigger:hover,
+.task-menu-trigger[aria-expanded='true'] {
   background: #ffffff06;
   color: #edf0ec;
 }
-.task-row-menu summary:focus-visible,
+.task-menu-trigger:focus-visible,
 .tasks-completed summary:focus-visible {
   outline: 1px solid #b6dfc566;
   outline-offset: 1px;
@@ -2721,48 +2721,795 @@ input::placeholder {
 }
 
 /* Shared control sizes; multiline data actions can grow to keep text readable. */
-.button { height: var(--control-height); line-height: 18px; padding-block: 8px; }
-.setting-input { height: var(--control-height); }
-.setting-input input { height: 100%; min-height: 0; }
-.date-filter-trigger { height: var(--control-height); }
-.date-presets button { height: var(--control-height); padding-block: 8px; font-size: 12px; line-height: 18px; }
-.toast .icon-button, .task-reminder-chip button { height: var(--control-height-compact); min-width: var(--control-height-compact); }
-.task-reminder-chip { min-height: var(--control-height-compact); }
+.button {
+  height: var(--control-height);
+  line-height: 18px;
+  padding-block: 8px;
+}
+.setting-input {
+  height: var(--control-height);
+}
+.setting-input input {
+  height: 100%;
+  min-height: 0;
+}
+.date-filter-trigger {
+  height: var(--control-height);
+}
+.date-presets button {
+  height: var(--control-height);
+  padding-block: 8px;
+  font-size: 12px;
+  line-height: 18px;
+}
+.toast .icon-button,
+.task-reminder-chip button {
+  height: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+}
+.task-reminder-chip {
+  min-height: var(--control-height-compact);
+}
 @media (max-width: 560px) {
-  .data-action-buttons .button { height: auto; min-height: var(--control-height); }
+  .data-action-buttons .button {
+    height: auto;
+    min-height: var(--control-height);
+  }
 }
 
 /* One compact control height throughout the application. */
-.button { padding-block: 6px; line-height: 18px; }
-.input-unit input, .task-input-row > input { height: var(--control-height); padding-block: 6px; }
-.task-date-fields input, .task-edit-label input { padding-block: 6px; }
-.task-time-controls select { padding-block: 5px; }
-.app-header nav button { height: var(--control-height); min-height: var(--control-height); padding-block: 5px; }
-.date-presets button, .task-date-presets button, .task-menu-panel button, .task-reminder-actions button { height: var(--control-height); min-height: var(--control-height); padding-block: 5px; }
-.task-input-row .icon-button, .task-check, .task-row-menu summary { height: var(--control-height); min-height: var(--control-height); width: var(--control-height); min-width: var(--control-height); }
-.task-add { padding-inline: 12px; }
-.icon-button { min-width: var(--control-height); }
-.input-unit > span { top: 8px; }
-.edit-form input { height: var(--control-height); min-height: var(--control-height); padding-block: 5px; }
-.task-menu-panel { top: 34px; }
-.creator-popover a { min-height: var(--control-height); }
-@media (max-width: 560px) {
-  .data-action-buttons .button { height: var(--control-height); min-height: var(--control-height); font-size: 10px; line-height: 12px; padding-block: 3px; }
+.button {
+  padding-block: 6px;
+  line-height: 18px;
 }
-.text-button, .creator-trigger { height: var(--control-height); min-height: var(--control-height); padding-block: 4px; line-height: 18px; }
-.date-filter-trigger { padding-block: 5px; line-height: 18px; }
+.input-unit input,
+.task-input-row > input {
+  height: var(--control-height);
+  padding-block: 6px;
+}
+.task-date-fields input,
+.task-edit-label input {
+  padding-block: 6px;
+}
+.task-time-controls select {
+  padding-block: 5px;
+}
+.app-header nav button {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding-block: 5px;
+}
+.date-presets button,
+.task-date-presets button,
+.task-menu-panel button,
+.task-reminder-actions button {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding-block: 5px;
+}
+.task-input-row .icon-button,
+.task-check,
+.task-menu-trigger {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  width: var(--control-height);
+  min-width: var(--control-height);
+}
+.task-add {
+  padding-inline: 12px;
+}
+.icon-button {
+  min-width: var(--control-height);
+}
+.input-unit > span {
+  top: 8px;
+}
+.edit-form input {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding-block: 5px;
+}
+.task-menu-panel {
+  top: 34px;
+}
+.creator-popover a {
+  min-height: var(--control-height);
+}
+@media (max-width: 560px) {
+  .data-action-buttons .button {
+    height: var(--control-height);
+    min-height: var(--control-height);
+    font-size: 10px;
+    line-height: 12px;
+    padding-block: 3px;
+  }
+}
+.text-button,
+.creator-trigger {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding-block: 4px;
+  line-height: 18px;
+}
+.date-filter-trigger {
+  padding-block: 5px;
+  line-height: 18px;
+}
 
 /* Keep the rendered input itself at the shared height, including unit fields. */
-.setting-input { border: 0; box-shadow: inset 0 0 0 1px #ffffff12; }
-.setting-input input { height: var(--control-height); border-radius: 7px; }
-.switch { width: 52px; min-width: 52px; height: var(--control-height); padding: 3px; }
-.switch > span { width: 24px; height: 24px; }
-.switch.on > span { transform: translateX(20px); }
-.switch::after { inset: -4px -2px; }
-.input-unit input, .task-input-row > input, .setting-input input, .edit-form input,
-.task-date-fields input, .task-edit-label input, .task-time-controls select {
+.setting-input {
+  border: 0;
+  box-shadow: inset 0 0 0 1px #ffffff12;
+}
+.setting-input input {
+  height: var(--control-height);
+  border-radius: 7px;
+}
+.switch {
+  width: 52px;
+  min-width: 52px;
+  height: var(--control-height);
+  padding: 3px;
+}
+.switch > span {
+  width: 24px;
+  height: 24px;
+}
+.switch.on > span {
+  transform: translateX(20px);
+}
+.switch::after {
+  inset: -4px -2px;
+}
+.input-unit input,
+.task-input-row > input,
+.setting-input input,
+.edit-form input,
+.task-date-fields input,
+.task-edit-label input,
+.task-time-controls select {
   font-size: 12px;
   line-height: 18px;
   border-radius: 7px;
 }
-.task-date-fields input, .task-edit-label input { padding-block: 6px; }
+.task-date-fields input,
+.task-edit-label input {
+  padding-block: 6px;
+}
+
+/* Size containment lets the companion tiles set this row's height. Task rows
+   scroll inside it without growing the dashboard or moving the composer. */
+.dashboard-secondary > .tasks-card {
+  contain: size;
+  min-height: 284px;
+}
+.task-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #526458 transparent;
+  padding-right: 4px;
+  margin-right: -4px;
+}
+.task-body > .task-list,
+.task-body > .tasks-completed {
+  flex-shrink: 0;
+}
+.task-body .tasks-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.tasks-heading,
+.task-composer {
+  flex-shrink: 0;
+}
+.task-menu-trigger {
+  display: grid;
+  place-items: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.task-menu-panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  z-index: 30;
+}
+.task-body:focus-visible {
+  outline: 1px solid #b6dfc566;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+@media (max-width: 640px) {
+  .dashboard-secondary > .tasks-card {
+    height: 284px;
+  }
+}
+
+/* App-owned selectors use the same surface and row treatment as task actions. */
+.dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--control-height);
+  min-height: var(--control-height);
+  min-width: 0;
+  padding: 5px 9px;
+  border: 1px solid #ffffff14;
+  border-radius: 7px;
+  background: #111513;
+  color: #e4eae5;
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+}
+.dropdown-trigger svg {
+  color: #899b8f;
+}
+.dropdown-trigger:hover,
+.dropdown-trigger[aria-expanded='true'] {
+  border-color: #b6dfc530;
+  background: #1d2921;
+}
+.dropdown-panel {
+  position: fixed;
+  z-index: 100;
+  padding: 5px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #526458 transparent;
+  background: #242c26;
+  color: #e4eae5;
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px #0005;
+  outline: none;
+}
+.dropdown-panel [role='option'] {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding: 5px 9px;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: #d4ddd5;
+  font-size: 12px;
+  text-align: left;
+}
+.dropdown-panel [role='option'].is-active {
+  background: #ffffff09;
+}
+.dropdown-panel [aria-selected='true'] {
+  color: #b6dfc5;
+}
+.dropdown-panel:focus-visible {
+  box-shadow:
+    0 10px 28px #0005,
+    0 0 0 1px #b6dfc526;
+}
+.task-time-controls .dropdown-trigger {
+  flex: 1;
+  width: 0;
+}
+.task-time-controls .dropdown-trigger:last-child {
+  flex: 1.15;
+}
+.reminder-datetime {
+  margin-top: 16px;
+  padding: 0 14px;
+  border: 1px solid #ffffff0d;
+  background: #111a1466;
+  border-radius: 12px;
+}
+.reminder-date-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  color: #a8baad;
+}
+.reminder-date-line > span {
+  flex: 1;
+  font-size: 12px;
+  color: #d5e1d8;
+}
+.reminder-date-line > button {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.reminder-time-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid #ffffff0b;
+}
+.reminder-time-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a8baad;
+  font-size: 12px;
+}
+.reminder-time-line .task-time-controls {
+  flex: 1;
+  min-width: 0;
+}
+.reminder-calendar {
+  border-top: 1px solid #ffffff0b;
+  padding: 10px 0 12px;
+}
+.reminder-calendar .calendar-heading {
+  margin-top: 0;
+}
+.reminder-calendar .calendar-weekdays {
+  margin-top: 2px;
+}
+.reminder-calendar .calendar-weekdays > span {
+  padding: 7px 0;
+}
+.reminder-calendar .calendar-day {
+  height: var(--control-height);
+}
+@media (max-width: 380px) {
+  .reminder-datetime {
+    padding-inline: 10px;
+  }
+  .reminder-date-line {
+    flex-wrap: wrap;
+    padding-block: 6px;
+    gap: 6px;
+  }
+  .reminder-date-line > button {
+    margin-left: auto;
+  }
+  .reminder-time-line {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 9px;
+  }
+}
+.task-menu-panel,
+.date-presets,
+.dropdown-panel {
+  background: #242c26;
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
+  padding: 5px;
+  box-shadow: 0 10px 28px #0005;
+}
+input[type='number'] {
+  appearance: textfield;
+}
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.modal:has(.reminder-split-picker) {
+  width: min(520px, calc(100% - 32px));
+}
+.reminder-split-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  margin-top: 16px;
+  border-top: 1px solid #ffffff0b;
+  border-bottom: 1px solid #ffffff0b;
+}
+.reminder-split-picker > .reminder-calendar {
+  min-width: 0;
+  padding: 12px 16px 12px 0;
+  border: 0;
+}
+.reminder-split-picker .calendar-heading {
+  margin: 0;
+  gap: 4px;
+}
+.reminder-split-picker .calendar-heading h3 {
+  font-size: 13px;
+  letter-spacing: -0.2px;
+}
+.reminder-split-picker .calendar-weekdays {
+  margin-top: 6px;
+}
+.reminder-split-picker .calendar-weekdays > span {
+  padding: 5px 0;
+  font-size: 9px;
+}
+.reminder-split-picker .calendar-days {
+  gap: 2px;
+}
+.reminder-split-picker .calendar-day {
+  height: 28px;
+  width: 28px;
+  justify-self: center;
+  border-radius: 6px;
+  font-size: 11px;
+}
+.reminder-time-column {
+  min-width: 0;
+  border-left: 1px solid #ffffff0b;
+  padding: 14px 0 12px 12px;
+}
+.reminder-time-column > h3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 450;
+  color: #95a69b;
+  margin-bottom: 10px;
+  height: 20px;
+}
+.reminder-time-list {
+  position: relative;
+  height: 218px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #526458 transparent;
+  border-radius: 6px;
+  outline-offset: 2px;
+}
+.reminder-time-list > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 32px;
+  height: 32px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 18px;
+  color: #a9b8ae;
+  background: transparent;
+  white-space: nowrap;
+}
+.reminder-time-list > button:hover {
+  background: #ffffff07;
+  color: #e6eee8;
+}
+.reminder-time-list > button[aria-selected='true'] {
+  background: #b6dfc51a;
+  color: #c7e8d2;
+}
+.reminder-time-list:focus-visible {
+  outline: 1px solid #b6dfc566;
+}
+.reminder-time-list:focus-visible > button.is-active {
+  box-shadow: inset 0 0 0 1px #b6dfc54d;
+}
+.no-reminder-times {
+  font-size: 11px;
+  color: #94a499;
+  line-height: 1.6;
+  text-align: center;
+  padding: 18px 5px;
+}
+@media (max-width: 400px) {
+  .modal:has(.reminder-split-picker) .modal-content {
+    padding: 18px 14px;
+  }
+  .reminder-split-picker {
+    grid-template-columns: minmax(0, 1fr) 88px;
+  }
+  .reminder-split-picker > .reminder-calendar {
+    padding-right: 8px;
+  }
+  .reminder-split-picker .calendar-day {
+    width: 22px;
+    height: 26px;
+    font-size: 10px;
+  }
+  .reminder-split-picker .calendar-days {
+    gap: 2px 0;
+  }
+  .reminder-split-picker .calendar-heading h3 {
+    font-size: 11px;
+  }
+  .reminder-split-picker .calendar-heading .icon-button {
+    min-width: 24px;
+    width: 24px;
+  }
+  .reminder-time-column {
+    padding-left: 7px;
+  }
+  .reminder-time-list > button {
+    padding-inline: 4px;
+    font-size: 10px;
+  }
+  .reminder-time-list {
+    height: 206px;
+  }
+}
+.modal:has(.reminder-split-picker) {
+  width: min(420px, calc(100% - 32px));
+}
+@media (min-width: 401px) {
+  .reminder-split-picker {
+    grid-template-columns: minmax(0, 1fr) 108px;
+  }
+}
+@media (min-width: 401px) {
+  .modal:has(.reminder-split-picker) {
+    width: min(400px, calc(100% - 32px));
+  }
+  .reminder-split-picker {
+    grid-template-columns: minmax(0, 1fr) 88px;
+  }
+}
+@media (max-width: 400px) {
+  .reminder-split-picker {
+    grid-template-columns: minmax(0, 1fr) 76px;
+  }
+}
+.task-reminder-form {
+  margin-top: 16px;
+}
+.task-reminder-form .reminder-split-picker {
+  margin-top: 0;
+}
+.reminder-split-picker {
+  border-top: 0;
+  border-bottom: 0;
+}
+.reminder-time-column {
+  border-left: 0;
+}
+.reminder-time-column > h3 {
+  justify-content: flex-start;
+  padding-inline: 8px;
+}
+@media (max-width: 400px) {
+  .reminder-time-column > h3 {
+    padding-inline: 4px;
+  }
+}
+.reminder-split-picker > .reminder-calendar {
+  padding-right: 6px;
+}
+.reminder-time-column {
+  padding-left: 4px;
+}
+@media (max-width: 400px) {
+  .reminder-split-picker > .reminder-calendar {
+    padding-right: 4px;
+  }
+  .reminder-time-column {
+    padding-left: 2px;
+  }
+}
+.reminder-time-column {
+  border-left: 1px solid #ffffff0b;
+}
+.anchored-popover {
+  position: fixed;
+  z-index: 80;
+  width: min(376px, calc(100vw - 16px));
+  padding: 14px 16px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #526458 transparent;
+  border: 1px solid #ffffff18;
+  border-radius: 14px;
+  background: #1b231e;
+  color: #e4ece3;
+  box-shadow:
+    0 16px 50px #0008,
+    0 2px 8px #0004;
+}
+.popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.popover-heading h2 {
+  font-size: 17px;
+  font-weight: 450;
+  letter-spacing: -0.4px;
+}
+.anchored-popover .task-reminder-form {
+  margin-top: 12px;
+}
+.anchored-popover .modal-actions {
+  margin-top: 16px;
+}
+@media (max-width: 400px) {
+  .anchored-popover {
+    padding: 10px 12px 14px;
+  }
+}
+.anchored-popover.is-compact {
+  padding: 8px 10px;
+}
+.is-compact .reminder-split-picker {
+  margin: 0;
+}
+.is-compact .reminder-calendar {
+  padding-block: 8px;
+}
+.is-compact .reminder-time-column {
+  padding-block: 8px;
+}
+.is-compact .reminder-time-list {
+  height: 242px;
+}
+@media (max-width: 400px) {
+  .is-compact .reminder-time-list {
+    height: 230px;
+  }
+}
+.task-schedule-group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: var(--control-height);
+  border-radius: 7px;
+}
+.task-schedule-group.has-reminder {
+  background: #b6dfc50b;
+}
+.task-input-row .task-schedule.has-reminder {
+  display: flex;
+  width: auto;
+  max-width: 130px;
+  padding-inline: 7px;
+  gap: 5px;
+  background: transparent;
+}
+.task-schedule-label {
+  min-width: 0;
+  max-width: 92px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 10px;
+}
+.task-input-row .task-clear-reminder {
+  color: #8da897;
+  background: transparent;
+}
+.task-input-row .task-clear-reminder:hover {
+  color: #e4ece3;
+}
+.task-schedule-group.is-expired .task-schedule {
+  color: #d9bd88;
+}
+/* The reminder label gives its space to the input smoothly while typing. */
+.task-schedule-label {
+  display: block;
+  opacity: 1;
+  transition:
+    max-width 220ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 140ms ease;
+}
+.task-input-row:has(> input:focus) .task-schedule-label {
+  max-width: 0;
+  opacity: 0;
+}
+@media (max-width: 400px) {
+  .task-schedule-label {
+    max-width: 70px;
+  }
+}
+.task-input-row .task-clear-reminder {
+  width: 22px;
+  min-width: 22px;
+  padding: 0;
+}
+.task-input-row .task-schedule.has-reminder {
+  padding-inline: 5px 2px;
+  gap: 4px;
+}
+.task-input-row .task-add {
+  padding-inline: 8px;
+  gap: 4px;
+}
+@media (max-width: 360px) {
+  .task-input-row .task-add {
+    width: 32px;
+    min-width: 32px;
+    padding-inline: 0;
+  }
+}
+
+.task-input-row .task-schedule.has-reminder {
+  transition:
+    gap 220ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 180ms,
+    color 180ms;
+}
+.task-input-row:has(> input:focus) .task-schedule.has-reminder {
+  gap: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-schedule-label,
+  .task-input-row .task-schedule.has-reminder {
+    transition: none;
+  }
+}
+@keyframes task-complete-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--task-exit-y, 16px));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .task-row.is-finishing {
+    animation: task-complete-out 200ms ease 2000ms forwards;
+  }
+}
+
+.tasks-completed-shell {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  flex-shrink: 0;
+  transition:
+    grid-template-rows 260ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms ease;
+}
+.tasks-completed-shell.is-visible {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.tasks-completed-shell > .tasks-completed {
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.tasks-completed-shell.is-visible > .tasks-completed {
+  margin-top: 8px;
+  border-top: 1px solid #ffffff09;
+}
+.task-row.finishing-up {
+  --task-exit-y: -16px;
+}
+@keyframes task-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(var(--task-arrive-y, -12px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .task-row.is-arriving {
+    animation: task-arrive 260ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+  .task-row.arriving-up {
+    --task-arrive-y: 12px;
+  }
+  .tasks-empty {
+    animation: task-arrive 180ms ease both;
+    --task-arrive-y: 0px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tasks-completed-shell {
+    transition: none;
+  }
+}

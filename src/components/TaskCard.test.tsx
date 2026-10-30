@@ -56,9 +56,15 @@ it('adds with Enter, completes into a collapsed group, reopens, edits, and delet
     screen.getByRole('textbox', { name: 'New task' }),
     'Send update{Enter}',
   )
-  await user.click(
+  vi.useFakeTimers()
+  fireEvent.click(
     screen.getByRole('checkbox', { name: 'Complete Send update' }),
   )
+  expect(document.querySelector('.tasks-completed .task-row')).toBeNull()
+  act(() => {
+    vi.advanceTimersByTime(2200)
+  })
+  vi.useRealTimers()
   expect(screen.getByText('Completed')).toBeTruthy()
   fireEvent.click(screen.getByText('Completed'))
   await user.click(screen.getByRole('checkbox', { name: 'Reopen Send update' }))
@@ -78,11 +84,10 @@ it('sets an optional tomorrow reminder and removes the chip before adding', asyn
   const user = userEvent.setup()
   render(<Tasks />)
   await user.click(screen.getByRole('button', { name: 'Add task reminder' }))
-  await user.click(screen.getByRole('button', { name: 'Tomorrow' }))
-  await user.selectOptions(screen.getByLabelText('Reminder hour'), '9')
-  await user.selectOptions(screen.getByLabelText('Reminder minute'), '30')
-  await user.selectOptions(screen.getByLabelText('AM or PM'), 'AM')
-  await user.click(screen.getByRole('button', { name: 'Set reminder' }))
+  await user.click(
+    screen.getByRole('button', { name: 'Saturday, October 31, 2026' }),
+  )
+  await user.click(screen.getByRole('option', { name: '9:30 AM' }))
   expect(screen.getByText(/Tomorrow,/)).toBeTruthy()
   await user.click(screen.getByRole('button', { name: 'Remove reminder' }))
   expect(screen.queryByText(/Tomorrow,/)).toBeNull()
@@ -92,24 +97,25 @@ it('rejects past picker times and cancels without changing the task draft', asyn
   const close = vi.fn()
   const user = userEvent.setup()
   render(
-    <TaskReminderPicker now={now} value={null} onSet={set} onClose={close} />,
+    <TaskReminderPicker
+      now={now}
+      value={now - 30 * 60_000}
+      onSet={set}
+      onClose={close}
+    />,
   )
-  await user.selectOptions(screen.getByLabelText('Reminder hour'), '9')
-  await user.selectOptions(screen.getByLabelText('Reminder minute'), '30')
-  await user.selectOptions(screen.getByLabelText('AM or PM'), 'AM')
   expect(
-    (screen.getByRole('button', { name: 'Set reminder' }) as HTMLButtonElement)
+    (screen.getByRole('option', { name: '9:30 AM' }) as HTMLButtonElement)
       .disabled,
   ).toBe(true)
-  await user.click(screen.getByRole('button', { name: 'Custom' }))
-  fireEvent.change(screen.getByLabelText('Reminder date'), {
-    target: { value: '2026-11-02' },
-  })
-  expect(
-    (screen.getByRole('button', { name: 'Set reminder' }) as HTMLButtonElement)
-      .disabled,
-  ).toBe(false)
-  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  await user.click(screen.getByRole('button', { name: 'Next month' }))
+  await user.click(
+    screen.getByRole('button', { name: 'Monday, November 2, 2026' }),
+  )
+  expect(set).not.toHaveBeenCalled()
+  expect(screen.queryByRole('button', { name: 'Set reminder' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Close Remind me' })).toBeNull()
+  await user.click(document.body)
   expect(close).toHaveBeenCalledOnce()
   expect(set).not.toHaveBeenCalled()
 })
@@ -226,11 +232,109 @@ it.each([
         onClose={vi.fn()}
       />,
     )
-    await user.click(screen.getByRole('button', { name: 'Tomorrow' }))
-    await user.selectOptions(screen.getByLabelText('Reminder hour'), '12')
-    await user.selectOptions(screen.getByLabelText('Reminder minute'), '0')
-    await user.selectOptions(screen.getByLabelText('AM or PM'), period)
-    await user.click(screen.getByRole('button', { name: 'Set reminder' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Saturday, October 31, 2026' }),
+    )
+    await user.click(screen.getByRole('option', { name: `12:00 ${period}` }))
     expect(set).toHaveBeenCalledWith(new Date(2026, 9, 31, hour).getTime())
   },
 )
+
+it('keeps task actions keyboard accessible outside the scrolling list', async () => {
+  const user = userEvent.setup()
+  render(<Tasks />)
+  await user.type(
+    screen.getByRole('textbox', { name: 'New task' }),
+    'Review{Enter}',
+  )
+  const trigger = screen.getByRole('button', { name: 'Actions for Review' })
+  await user.click(trigger)
+  expect(document.activeElement).toBe(
+    screen.getByRole('button', { name: 'Edit task' }),
+  )
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('button', { name: 'Edit task' })).toBeNull()
+  expect(document.activeElement).toBe(trigger)
+  await user.click(trigger)
+  await user.click(screen.getByRole('textbox', { name: 'New task' }))
+  expect(screen.queryByRole('button', { name: 'Edit task' })).toBeNull()
+})
+
+it('holds a checked task briefly and allows reopening before it disappears', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(now)
+  render(<Tasks />)
+  const input = screen.getByRole('textbox', { name: 'New task' })
+  fireEvent.change(input, { target: { value: 'Review notes' } })
+  fireEvent.submit(input.closest('form')!)
+  fireEvent.click(
+    screen.getByRole('checkbox', { name: 'Complete Review notes' }),
+  )
+  expect(
+    screen
+      .getByRole('checkbox', { name: 'Reopen Review notes' })
+      .getAttribute('aria-checked'),
+  ).toBe('true')
+  expect(document.querySelector('.tasks-completed .task-row')).toBeNull()
+  act(() => {
+    vi.advanceTimersByTime(1000)
+  })
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Reopen Review notes' }))
+  act(() => {
+    vi.advanceTimersByTime(3000)
+  })
+  expect(
+    screen.getByRole('checkbox', { name: 'Complete Review notes' }),
+  ).toBeTruthy()
+  fireEvent.click(
+    screen.getByRole('checkbox', { name: 'Complete Review notes' }),
+  )
+  act(() => {
+    vi.advanceTimersByTime(2200)
+  })
+  expect(screen.getByText('Completed')).toBeTruthy()
+  expect(
+    screen
+      .getByRole('checkbox', { name: 'Reopen Review notes' })
+      .closest('.tasks-completed'),
+  ).toBeTruthy()
+})
+
+it('keeps Completed mounted and delays reopening before moving the task to the top', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(now)
+  render(<Tasks />)
+  const input = screen.getByRole('textbox', { name: 'New task' })
+  for (const title of ['First task', 'Second task']) {
+    fireEvent.change(input, { target: { value: title } })
+    fireEvent.submit(input.closest('form')!)
+  }
+  const group = document.querySelector('.tasks-completed')
+  fireEvent.click(
+    screen.getByRole('checkbox', { name: 'Complete Second task' }),
+  )
+  expect(document.querySelector('.tasks-completed')).toBe(group)
+  act(() => {
+    vi.advanceTimersByTime(2200)
+  })
+  fireEvent.click(screen.getByText('Completed'))
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Reopen Second task' }))
+  expect(document.querySelector('.tasks-completed .finishing-up')).toBeTruthy()
+  act(() => {
+    vi.advanceTimersByTime(1000)
+  })
+  expect(document.querySelector('.tasks-completed .finishing-up')).toBeTruthy()
+  act(() => {
+    vi.advanceTimersByTime(1200)
+  })
+  const titles = [
+    ...document.querySelectorAll('.task-body > .task-list .task-title'),
+  ].map((element) => element.textContent)
+  expect(titles).toEqual(['Second task', 'First task'])
+  expect(document.querySelector('.tasks-completed')).toBe(group)
+  expect(
+    document
+      .querySelector('.tasks-completed-shell')
+      ?.classList.contains('is-visible'),
+  ).toBe(false)
+})
