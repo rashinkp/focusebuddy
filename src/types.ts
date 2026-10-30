@@ -38,9 +38,19 @@ export interface ActiveSession {
   checkpoint: number
   dueEventId: string | null
 }
+export interface Task {
+  id: string
+  title: string
+  createdAt: number
+  completedAt: number | null
+  reminderAt: number | null
+  reminderStatus: 'scheduled' | 'due' | 'dismissed' | null
+  notificationSent: boolean
+}
 export interface AppData {
-  schemaVersion: 1
+  schemaVersion: 2
   revision: number
+  tasks: Task[]
   water: WaterEntry[]
   sessions: WorkSession[]
   breaks: BreakRecord[]

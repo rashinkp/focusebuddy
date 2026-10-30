@@ -28,7 +28,7 @@ This project puts most of its complexity into predictable behavior:
 - **Resilient storage.** Stored records are validated, unreadable data is preserved, and storage failures have an in-memory fallback.
 - **Considered interactions.** Keyboard navigation, native dialogs, background scroll locking, subtle entrance effects, stacked toasts, and reduced-motion support are built into the interface.
 
-The automated suite currently includes **67 tests across 10 files**, covering the session engine, date calculations, storage and ownership behavior, and user interactions.
+The automated suite currently includes **86 tests across 12 files**, covering the session engine, date calculations, storage and ownership behavior, and user interactions.
 
 ## Run locally
 
@@ -55,6 +55,7 @@ npm run preview
 
 - Customizable daily water goal, quick additions, custom amounts, individual corrections and deletion, and undo of the latest addition in the current tab.
 - History presets for Today, Yesterday, the previous Monday–Sunday week, and the previous calendar month; one custom calendar selects an inclusive start–end range. The selected period appears in the History header and filters water, break outcomes, and work totals.
+- Tasks with optional date/time reminders, editing, completion, and ten-minute snooze.
 - Timestamp-based work sessions with pause, resume, end, and refresh recovery.
 - Coordinated movement breaks with countdowns, snooze, skip, explicit completion, and interruption records.
 - In-app reminders and optional desktop notifications.
@@ -94,6 +95,18 @@ If more than 60 seconds pass without a checkpoint, the app conservatively pauses
 
 The browser cannot reliably distinguish sleep, closure, and throttling. Prolonged inactivity may therefore pause the session. Idle and already-paused sessions stay in their existing states. Keep the app open for reminders: it cannot run when closed, and browser or operating-system suspension can delay reminders.
 
+## Tasks and reminders
+
+Add a task on Today with Enter or the Add button. The calendar button opens an optional reminder picker with Later today, Tomorrow, and Custom date choices. Each task supports one reminder. The row’s action menu edits the title or reminder and deletes the task. Completed tasks are tucked into a collapsible group and can be reopened.
+
+Tasks persist across calendar days. Scheduled tasks appear first in reminder order, followed by unscheduled tasks. Completing a task cancels its reminder; reopening it does not silently schedule another notification. Explicitly changing its reminder creates a new schedule.
+
+A reminder requires a future local date and time. It is stored as an absolute timestamp, so travel or timezone changes update its displayed local time without moving the scheduled instant. Invalid dates and nonexistent local times during daylight-saving changes are rejected.
+
+When a reminder becomes due, a persistent reminder area appears on both Today and History. Complete finishes the task, Snooze 10 min schedules another reminder, and Dismiss closes the reminder while leaving the task incomplete. Missed reminders appear together when the app returns after closure or suspension. Delivery is claimed in saved task state by the writable tab to prevent duplicate desktop notifications or replay on refresh. Desktop delivery is optional and uses the shared notification setting; failures leave the in-app reminders available.
+
+The browser must be open to deliver reminders on time. There is no server, push service, or background execution guarantee. Clear all application data also deletes tasks; Reset today preserves them.
+
 ## Calendar dates
 
 Timestamps use Unix epoch milliseconds. Display and daily grouping use the browser’s current local timezone.
@@ -105,11 +118,11 @@ Timestamps use Unix epoch milliseconds. Display and daily grouping use the brows
 - The displayed date refreshes while open and when returning to the app. History is never deleted at midnight.
 - Changing timezone regroups existing history using the new timezone.
 
-Reset today ends the current session, removes water and break outcomes recorded today, and removes only today’s portions of work segments. Earlier history and settings are preserved. Clear all data removes all focusebuddy records and settings from this browser origin. Both require separate confirmation and cannot be undone.
+Reset today ends the current session, removes water and break outcomes recorded today, and removes only today’s portions of work segments. Tasks, earlier history, and settings are preserved. Clear all data removes all focusebuddy records and settings from this browser origin. Both require separate confirmation and cannot be undone.
 
 ## Storage and multiple tabs
 
-The sole persisted key remains `posture-buddy:data` for compatibility with existing saved activity. Schema version 1 stores individual water entries, work sessions and segments, break outcomes, settings, current session state, a revision, and recently handled notification event IDs. Totals are derived from records. Future migrations belong in `src/services/storage.ts`.
+The sole persisted key remains `posture-buddy:data` for compatibility with existing saved activity. Schema version 2 adds tasks and reminder delivery state to individual water entries, work sessions and segments, break outcomes, settings, current session state, a revision, and recently handled notification event IDs. Version 1 records migrate on load without losing existing activity or preferences. Totals are derived from records. Future migrations belong in `src/services/storage.ts`.
 
 Unreadable or unsupported stored data is left untouched and editing is disabled. Settings provides an explicit reset. If storage access or saving fails, the application continues in memory and warns that changes may not survive reload. Browser storage can be cleared and is not a backup. There is no export or cloud sync in this release.
 

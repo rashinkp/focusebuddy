@@ -3,7 +3,7 @@ import { Check, Coffee, Droplet, Pencil, Trash2, X, Clock3 } from 'lucide-react'
 import type { AppData } from '../types'
 import type { Action } from '../services/engine'
 import { validAmount } from '../services/engine'
-import { duration, workDurationBetween } from '../utils/time'
+import { duration, formatTime, workDurationBetween } from '../utils/time'
 import { rangeBounds, type DateRange } from '../utils/historyDates'
 
 export function History({
@@ -216,10 +216,7 @@ export function History({
                           ·{' '}
                         </>
                       )}
-                      {new Date(entry.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatTime(entry.timestamp)}
                       {entry.kind === 'break' && entry.status !== 'skipped'
                         ? ` · ${duration(entry.durationMs)}`
                         : ''}

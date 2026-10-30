@@ -18,7 +18,7 @@ const phases = ['working', 'due', 'break', 'ready', 'paused']
 export function isData(value: unknown): value is AppData {
   if (
     !object(value) ||
-    value.schemaVersion !== 1 ||
+    value.schemaVersion !== 2 ||
     !Number.isInteger(value.revision) ||
     Number(value.revision) < 0
   )
@@ -67,9 +67,35 @@ export function isData(value: unknown): value is AppData {
     )
   )
     return false
+  if (
+    !Array.isArray(value.tasks) ||
+    !value.tasks.every(
+      (task) =>
+        object(task) &&
+        id(task.id) &&
+        typeof task.title === 'string' &&
+        task.title.trim().length > 0 &&
+        task.title.length <= 200 &&
+        time(task.createdAt) &&
+        (task.completedAt === null || time(task.completedAt)) &&
+        (task.reminderAt === null || time(task.reminderAt)) &&
+        (task.reminderAt === null
+          ? task.reminderStatus === null
+          : ['scheduled', 'due', 'dismissed'].includes(
+              String(task.reminderStatus),
+            )) &&
+        typeof task.notificationSent === 'boolean',
+    )
+  )
+    return false
   if (!Array.isArray(value.notifiedEvents) || !value.notifiedEvents.every(id))
     return false
-  for (const collection of [value.water, value.sessions, value.breaks]) {
+  for (const collection of [
+    value.water,
+    value.sessions,
+    value.breaks,
+    value.tasks,
+  ]) {
     const ids = collection.map((e: { id: string }) => e.id)
     if (new Set(ids).size !== ids.length) return false
   }
@@ -113,8 +139,10 @@ export function load(storage?: StorageLike): LoadResult {
   try {
     const raw = (storage ?? localStorage).getItem(STORAGE_KEY)
     if (raw === null) return { data: freshData(), warning: '', blocked: false }
-    const value: unknown = JSON.parse(raw)
-    // Version 1 is the first schema. Add explicit migrations here for future versions.
+    let value: unknown = JSON.parse(raw)
+    // Version 2 adds tasks; preserve every existing activity record and preference.
+    if (object(value) && value.schemaVersion === 1)
+      value = { ...value, schemaVersion: 2, tasks: [] }
     if (!isData(value)) throw new Error('invalid schema')
     return { data: value, warning: '', blocked: false }
   } catch (error) {

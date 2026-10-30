@@ -64,3 +64,12 @@ export function duration(ms: number) {
     ? `${Math.floor(minutes / 60)}h ${minutes % 60}m`
     : `${minutes} min`
 }
+
+/** Clock times always use an explicit 12-hour display, independent of device locale. */
+export function formatTime(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}

@@ -166,6 +166,72 @@ export function useBuddy() {
     [],
   )
 
+  // Only the writable tab claims delivery. The persistent in-app reminder stays
+  // available until completion, snooze, or dismissal, including after reload.
+  const taskNotification = useRef<Notification | null>(null)
+  useEffect(() => {
+    if (!owner || blocked) return
+    const due = dataRef.current.tasks.filter(
+      (task) =>
+        task.completedAt === null &&
+        task.reminderStatus === 'due' &&
+        !task.notificationSent,
+    )
+    if (!due.length) return
+    due.forEach((task) => dispatch({ type: 'task-notified', id: task.id }))
+    if (
+      !data.settings.notificationsEnabled ||
+      !('Notification' in window) ||
+      Notification.permission !== 'granted'
+    )
+      return
+    try {
+      taskNotification.current?.close()
+      taskNotification.current = new Notification(
+        due.length === 1 ? 'A little nudge' : `${due.length} task reminders`,
+        {
+          body:
+            due.length === 1
+              ? due[0].title
+              : `${due[0].title} and ${due.length - 1} more. Open focusebuddy to review.`,
+          tag: 'focusebuddy:tasks',
+        },
+      )
+      taskNotification.current.onclick = () => {
+        window.focus()
+      }
+    } catch {
+      setMessage(
+        'Desktop notification could not be delivered. Your task reminder is here in the app.',
+      )
+    }
+  }, [
+    data.tasks,
+    data.settings.notificationsEnabled,
+    owner,
+    blocked,
+    dispatch,
+    setMessage,
+  ])
+  useEffect(() => {
+    if (
+      !owner ||
+      !data.settings.notificationsEnabled ||
+      !data.tasks.some(
+        (task) => task.completedAt === null && task.reminderStatus === 'due',
+      )
+    ) {
+      taskNotification.current?.close()
+      taskNotification.current = null
+    }
+  }, [data.tasks, data.settings.notificationsEnabled, owner])
+  useEffect(
+    () => () => {
+      taskNotification.current?.close()
+    },
+    [],
+  )
+
   const addWater = (amount: number) => {
     const id = crypto.randomUUID()
     dispatch({ type: 'water-add', amount, id })

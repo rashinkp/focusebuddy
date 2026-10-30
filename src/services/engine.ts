@@ -1,4 +1,5 @@
 import type { ActiveSession, AppData, LivePhase, Settings } from '../types'
+import { taskTransition, type TaskAction, tickTasks } from './tasks'
 import { dayBounds, inDay, MINUTE } from '../utils/time'
 
 export const defaults: Settings = {
@@ -8,7 +9,8 @@ export const defaults: Settings = {
   notificationsEnabled: false,
 }
 export const freshData = (): AppData => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
+  tasks: [],
   revision: 0,
   water: [],
   sessions: [],
@@ -31,6 +33,7 @@ export const validSettings = (s: Settings) =>
   s.breakDurationMinutes <= 60 &&
   typeof s.notificationsEnabled === 'boolean'
 export type Action =
+  | TaskAction
   | { type: 'water-add'; amount: number; id: string }
   | { type: 'water-edit'; id: string; amount: number }
   | { type: 'water-delete'; id: string }
@@ -108,7 +111,7 @@ function end(data: AppData, now: number) {
 }
 
 /** A single timestamp-driven transition function shared by UI, recovery, and tests. */
-export function transition(
+function sessionTransition(
   input: AppData,
   action: Action,
   now: number,
@@ -256,4 +259,24 @@ export function transition(
   }
   data.revision++
   return data
+}
+
+export function transition(
+  input: AppData,
+  action: Action,
+  now: number,
+): AppData {
+  if (action.type.startsWith('task-')) {
+    const tasks = taskTransition(input.tasks, action as TaskAction, now)
+    return tasks === input.tasks
+      ? input
+      : { ...input, tasks, revision: input.revision + 1 }
+  }
+  const tasks =
+    action.type === 'tick' ? tickTasks(input.tasks, now) : input.tasks
+  const checked =
+    tasks === input.tasks
+      ? input
+      : { ...input, tasks, revision: input.revision + 1 }
+  return sessionTransition(checked, action, now)
 }

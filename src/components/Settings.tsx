@@ -152,7 +152,7 @@ export function Settings({
                     ? 'Blocked by your browser. Enable notifications in browser settings.'
                     : permission === 'unsupported' || permission === 'unavailable'
                       ? 'Unavailable in this browser.'
-                      : 'Break reminders while the app is open.'}
+                      : 'Break and task reminders while the app is open.'}
                 </small>
               </span>
               <button
@@ -222,8 +222,8 @@ export function Settings({
         >
           <p className="modal-intro">
             {confirmation === 'today'
-              ? 'This ends your current session and removes today’s water, break records, and work time. Earlier activity and preferences are kept. This cannot be undone.'
-              : 'This ends your session and deletes all focusebuddy history and preferences on this browser. Other applications are unaffected. This cannot be undone.'}
+              ? 'This ends your current session and removes today’s water, break records, and work time. Tasks, earlier activity, and preferences are kept. This cannot be undone.'
+              : 'This ends your session and deletes all focusebuddy tasks, history, and preferences on this browser. Other applications are unaffected. This cannot be undone.'}
           </p>
           <div className="confirmation-actions">
             <button

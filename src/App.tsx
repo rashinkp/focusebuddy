@@ -24,7 +24,8 @@ import { historyRange, type HistoryFilter } from './utils/historyDates'
 import { Settings } from './components/Settings'
 import { CreatorPopover } from './components/CreatorPopover'
 import { Toast } from './components/Toast'
-import { duration, inDay, workDuration } from './utils/time'
+import { TaskCard, TaskReminders } from './components/TaskCard'
+import { duration, formatTime, inDay, workDuration } from './utils/time'
 
 export default function App() {
   const buddy = useBuddy()
@@ -163,6 +164,11 @@ export default function App() {
             />
           )}
         </div>
+        <TaskReminders
+          tasks={data.tasks}
+          disabled={!canEdit}
+          dispatch={buddy.dispatch}
+        />
         {tab === 'today' ? (
           <>
             <div className="dashboard-grid">
@@ -180,6 +186,64 @@ export default function App() {
                 undo={!!buddy.undo}
                 undoWater={buddy.undoWater}
               />
+            </div>
+            <div className="dashboard-secondary">
+              <TaskCard
+                tasks={data.tasks}
+                now={now}
+                disabled={!canEdit}
+                dispatch={buddy.dispatch}
+                notify={buddy.setMessage}
+              />
+              <div className="dashboard-aside">
+                <section className="gentle-note">
+                  <div className="note-leaf">
+                    <Leaf size={26} strokeWidth={1.3} />
+                  </div>
+                  <div>
+                    <p className="eyebrow">A GENTLE REMINDER</p>
+                    <h3>Your best posture is your next one.</h3>
+                    <p>
+                      Unclench your jaw. Let your shoulders soften.
+                      <br />
+                      Make a little room to move throughout the day.
+                    </p>
+                  </div>
+                  <span className="note-decoration" aria-hidden="true">
+                    <Leaf size={96} strokeWidth={0.6} />
+                  </span>
+                </section>
+                <section className="recent-card">
+                  <div>
+                    <h3>Little moments, logged.</h3>
+                    <button
+                      className="text-button"
+                      onClick={() => setTab('history')}
+                      aria-label="View all activity"
+                    >
+                      <ArrowUpRight size={18} />
+                    </button>
+                  </div>
+                  {todayWater.length ? (
+                    <p>
+                      <span className="subtle-dot blue-dot" />
+                      Last sip: {todayWater[todayWater.length - 1].amountMl} ml
+                      <span className="recent-time">
+                        {formatTime(
+                          todayWater[todayWater.length - 1].timestamp,
+                        )}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="muted">
+                      Your first sip is a good place to start.
+                    </p>
+                  )}
+                  <span className="fine-print">
+                    A simple record. No scores, no pressure.
+                  </span>
+                </section>
+              </div>
             </div>
             <section className="summary-section" aria-label="Today’s activity">
               <div className="summary-grid">
@@ -232,58 +296,6 @@ export default function App() {
                 </div>
               </div>
             </section>
-            <div className="bottom-grid">
-              <section className="gentle-note">
-                <div className="note-leaf">
-                  <Leaf size={26} strokeWidth={1.3} />
-                </div>
-                <div>
-                  <p className="eyebrow">A GENTLE REMINDER</p>
-                  <h3>Your best posture is your next one.</h3>
-                  <p>
-                    Unclench your jaw. Let your shoulders soften.
-                    <br />
-                    Make a little room to move throughout the day.
-                  </p>
-                </div>
-                <span className="note-decoration" aria-hidden="true">
-                  <Leaf size={96} strokeWidth={0.6} />
-                </span>
-              </section>
-              <section className="recent-card">
-                <div>
-                  <h3>Little moments, logged.</h3>
-                  <button
-                    className="text-button"
-                    onClick={() => setTab('history')}
-                    aria-label="View all activity"
-                  >
-                    <ArrowUpRight size={18} />
-                  </button>
-                </div>
-                {todayWater.length ? (
-                  <p>
-                    <span className="subtle-dot blue-dot" />
-                    Last sip: {todayWater[todayWater.length - 1].amountMl} ml
-                    <span className="recent-time">
-                      {new Date(
-                        todayWater[todayWater.length - 1].timestamp,
-                      ).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </p>
-                ) : (
-                  <p className="muted">
-                    Your first sip is a good place to start.
-                  </p>
-                )}
-                <span className="fine-print">
-                  A simple record. No scores, no pressure.
-                </span>
-              </section>
-            </div>
           </>
         ) : (
           <History
