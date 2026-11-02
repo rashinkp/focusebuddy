@@ -165,15 +165,6 @@ function TaskRow({
               className={`task-time ${task.reminderStatus === 'due' ? 'is-due' : ''}`}
             >
               <Bell size={12} />
-              {finishing
-                ? finishing === 'up'
-                  ? 'Reopening · '
-                  : 'Completed · '
-                : task.reminderStatus === 'due'
-                  ? 'Reminder due · '
-                  : task.reminderStatus === 'dismissed'
-                    ? 'Reminder off · '
-                    : ''}
               {taskReminderLabel(task.reminderAt, now)}
             </span>
           )}
@@ -347,6 +338,9 @@ export function TaskCard({
   const [reminding, setReminding] = useState<string | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const body = useRef<HTMLDivElement>(null)
+  const completedGroup = useRef<HTMLDetailsElement>(null)
+  const positions = useRef(new Map<string, number>())
+  const movingFocus = useRef<string | null>(null)
   const [finishing, setFinishing] = useState<
     Record<
       string,
@@ -360,9 +354,6 @@ export function TaskCard({
   >({})
   const [reopened, setReopened] = useState<Record<string, number>>({})
   const [arriving, setArriving] = useState<Record<string, 'up' | 'down'>>({})
-  useLayoutEffect(() => {
-    if (Object.values(arriving).includes('up')) body.current?.scrollTo?.({ top: 0, behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
-  }, [arriving])
   useEffect(() => {
     if (!Object.keys(arriving).length) return
     const timer = window.setTimeout(() => setArriving({}), 280)
@@ -379,7 +370,7 @@ export function TaskCard({
           focusedRow &&
           finishing[focusedRow.dataset.taskId!]?.until <= Date.now()
         )
-          input.current?.focus({ preventScroll: true })
+          movingFocus.current = focusedRow.dataset.taskId!
         const finished = Object.entries(finishing).filter(
           ([, item]) => item.until <= Date.now(),
         )
@@ -443,8 +434,37 @@ export function TaskCard({
   const completedCount = tasks.filter(
     (task) => task.completedAt !== null,
   ).length
+  const layoutKey = `${pending.map((task) => task.id).join(',')}|${completed.map((task) => task.id).join(',')}`
+  useLayoutEffect(() => {
+    const container = body.current
+    if (!container) return
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const next = new Map<string, number>()
+    const origin = container.getBoundingClientRect().top
+    for (const row of container.querySelectorAll<HTMLElement>('[data-task-id]')) {
+      const id = row.dataset.taskId!
+      const top = row.getBoundingClientRect().top - origin + container.scrollTop
+      next.set(id, top)
+      const previous = positions.current.get(id)
+      if (!reduced && previous !== undefined && Math.abs(previous - top) > 1) {
+        row.animate?.(
+          [{ translate: `0 ${previous - top}px` }, { translate: '0 0' }],
+          { duration: 360, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+        )
+      }
+    }
+    positions.current = next
+    if (movingFocus.current) {
+      const row = [...container.querySelectorAll<HTMLElement>('[data-task-id]')]
+        .find((item) => item.dataset.taskId === movingFocus.current)
+      row?.querySelector<HTMLButtonElement>('.task-check')?.focus({ preventScroll: true })
+      row?.scrollIntoView?.({ block: 'nearest', behavior: reduced ? 'instant' : 'smooth' })
+      movingFocus.current = null
+    }
+  }, [layoutKey])
   const toggleTask = (task: Task) => {
     if (disabled) return
+    if (task.completedAt === null && completedGroup.current) completedGroup.current.open = true
     if (finishing[task.id])
       setFinishing((current) =>
         Object.fromEntries(
@@ -537,7 +557,7 @@ export function TaskCard({
           aria-hidden={!showCompleted}
           inert={!showCompleted}
         >
-          <details className="tasks-completed">
+          <details ref={completedGroup} className="tasks-completed">
             <summary>
               <ChevronDown size={14} />
               Completed <span>{completedCount}</span>
@@ -650,64 +670,6 @@ export function TaskCard({
           onClose={() => setEditing(null)}
         />
       )}
-    </section>
-  )
-}
-
-export function TaskReminders({
-  tasks,
-  disabled,
-  dispatch,
-}: {
-  tasks: Task[]
-  disabled: boolean
-  dispatch: (action: Action) => void
-}) {
-  const due = tasks.filter(
-    (t) => t.completedAt === null && t.reminderStatus === 'due',
-  )
-  if (!due.length) return null
-  return (
-    <section className="task-reminders" aria-label="Task reminders">
-      <div className="task-reminders-heading" role="status">
-        <Bell size={17} />
-        <h2>
-          {due.length === 1
-            ? 'A little nudge'
-            : `${due.length} reminders to come back to`}
-        </h2>
-        <span className="sr-only">
-          {due.map((task) => task.title).join(', ')}
-        </span>
-      </div>
-      <ul>
-        {due.map((task) => (
-          <li key={task.id}>
-            <strong>{task.title}</strong>
-            <div className="task-reminder-actions">
-              <button
-                disabled={disabled}
-                onClick={() => dispatch({ type: 'task-toggle', id: task.id })}
-              >
-                <Check size={14} />
-                Complete
-              </button>
-              <button
-                disabled={disabled}
-                onClick={() => dispatch({ type: 'task-snooze', id: task.id })}
-              >
-                Snooze 10 min
-              </button>
-              <button
-                disabled={disabled}
-                onClick={() => dispatch({ type: 'task-dismiss', id: task.id })}
-              >
-                Dismiss
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
     </section>
   )
 }

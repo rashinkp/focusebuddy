@@ -2846,17 +2846,17 @@ input::placeholder {
   border-radius: 7px;
 }
 .switch {
-  width: 52px;
-  min-width: 52px;
-  height: var(--control-height);
+  width: 40px;
+  min-width: 40px;
+  height: 24px;
   padding: 3px;
 }
 .switch > span {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
 }
 .switch.on > span {
-  transform: translateX(20px);
+  transform: translateX(16px);
 }
 .switch::after {
   inset: -4px -2px;
@@ -3511,5 +3511,138 @@ input[type='number']::-webkit-outer-spin-button {
 @media (prefers-reduced-motion: reduce) {
   .tasks-completed-shell {
     transition: none;
+  }
+}
+
+/* Rows travel between their actual positions; adjacent rows close the gap too. */
+.task-row.is-finishing,
+.task-row.is-arriving {
+  animation: none;
+}
+.task-row {
+  position: relative;
+}
+.task-row.is-arriving {
+  z-index: 1;
+}
+.tasks-completed-shell.is-visible > .tasks-completed {
+  overflow: visible;
+}
+
+/* Keep the timer and session controls in a tighter, balanced composition. */
+.session-card {
+  padding-top: 14px;
+}
+.session-content {
+  padding-block: 8px;
+  gap: 16px;
+}
+.session-copy h3 {
+  font-size: 25px;
+  line-height: 1.25;
+}
+.session-copy p {
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.session-card .timer-ring {
+  width: 152px;
+  height: 152px;
+}
+.session-card .ring-center strong {
+  font-size: 35px;
+}
+.session-card .ring-center {
+  gap: 6px;
+}
+.session-actions {
+  gap: 6px;
+  margin: 4px 0 12px;
+}
+.session-actions .button {
+  padding-inline: 11px;
+  gap: 6px;
+}
+.session-actions .icon-button {
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #282f29;
+  border: 1px solid #ffffff0b;
+  color: #b6c2b5;
+  border-radius: 8px;
+}
+.session-actions .icon-button:hover:not(:disabled) {
+  background: #343d35;
+  color: #e1f2de;
+}
+.session-bottom {
+  min-height: 40px;
+}
+@media (max-width: 900px) {
+  .session-copy h3 { font-size: 23px; }
+  .session-card .timer-ring { width: 136px; height: 136px; }
+  .session-card .ring-center strong { font-size: 32px; }
+}
+@media (max-width: 640px) {
+  .session-content { gap: 12px; }
+  .session-copy h3 { font-size: 22px; }
+  .session-card .timer-ring { width: 124px; height: 124px; }
+  .session-card .ring-center strong { font-size: 30px; }
+}
+@media (max-width: 380px) {
+  .session-content { flex-direction: row; align-items: center; }
+  .session-copy h3 { font-size: 19px; }
+  .session-card .timer-ring { width: 112px; height: 112px; }
+  .session-card .ring-center strong { font-size: 27px; }
+  .session-bottom { flex-direction: row; align-items: center; }
+}
+
+.toast-stack[data-reminders='true'] {
+  width: min(460px, 100%);
+}
+.toast-reminder {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.toast-reminder .toast-check {
+  padding-top: 0;
+}
+.toast-reminder > span:nth-child(2) {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.toast-actions {
+  grid-column: 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.toast-actions .button {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding: 5px 10px;
+  gap: 5px;
+}
+
+.session-content {
+  align-items: flex-start;
+}
+.session-copy {
+  padding-top: 12px;
+}
+@media (max-width: 380px) {
+  .session-content {
+    align-items: flex-start;
+  }
+  .session-copy {
+    padding-top: 8px;
   }
 }

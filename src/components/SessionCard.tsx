@@ -110,17 +110,7 @@ export function SessionCard({
               </>
             )}
           </h3>
-          <p>
-            {phase === 'paused'
-              ? 'Pick up where you left off, whenever you’re ready.'
-              : phase === 'due'
-                ? 'Stand up, stretch, or take a short walk.'
-                : phase === 'ready'
-                  ? 'Return to work when you’re ready.'
-                  : breakPhase
-                    ? 'Look away. Let your shoulders soften.'
-                    : 'Focused work, with a little room to reset.'}
-          </p>
+
         </div>
         <div
           className="timer-ring"
@@ -183,7 +173,7 @@ export function SessionCard({
             disabled={disabled}
             onClick={() => dispatch({ type: 'pause' })}
           >
-            <Pause size={17} />
+            <Pause size={14} fill="currentColor" strokeWidth={1.5} />
             Pause session
           </button>
         )}
@@ -193,7 +183,7 @@ export function SessionCard({
             disabled={disabled}
             onClick={() => dispatch({ type: 'resume' })}
           >
-            <Play size={16} />
+            <Play size={14} fill="currentColor" strokeWidth={1.5} />
             Resume session
           </button>
         )}
@@ -230,7 +220,7 @@ export function SessionCard({
               disabled={disabled}
               onClick={() => dispatch({ type: 'pause' })}
             >
-              <Pause size={17} />
+              <Pause size={14} fill="currentColor" strokeWidth={1.5} />
               Pause break
             </button>
             <button
@@ -260,7 +250,7 @@ export function SessionCard({
             title="End session"
             onClick={() => dispatch({ type: 'end' })}
           >
-            <Square size={16} />
+            <Square size={12} fill="currentColor" strokeWidth={1.5} />
           </button>
         )}
         {phase === 'due' && (
@@ -271,10 +261,11 @@ export function SessionCard({
             title="Pause session"
             onClick={() => dispatch({ type: 'pause' })}
           >
-            <Pause size={17} />
+            <Pause size={14} fill="currentColor" strokeWidth={1.5} />
           </button>
         )}
       </div>
+
       <div className="session-bottom">
         <span>
           {active && session

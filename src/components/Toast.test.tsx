@@ -63,3 +63,23 @@ it('bounds the stack and clears pending timers when unmounted', () => {
   view.unmount()
   expect(vi.getTimerCount()).toBe(0)
 })
+
+it('orders reminder actions and expires after ten seconds without changing the task', () => {
+  vi.useFakeTimers()
+  const dispatch = vi.fn()
+  const task = {
+    id: 'reminder', title: 'A long reminder title that wraps naturally',
+    createdAt: Date.now() - 60_000, completedAt: null,
+    reminderAt: Date.now() - 30_000, reminderStatus: 'due' as const,
+    notificationSent: true,
+  }
+  const view = render(<Toast messages={[]} onDismiss={vi.fn()} tasks={[task]} onTaskAction={dispatch} />)
+  expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Dismiss', 'Complete'])
+  act(() => vi.advanceTimersByTime(9999))
+  expect(view.container.querySelector('.toast[data-open="true"]')).toBeTruthy()
+  act(() => vi.advanceTimersByTime(1))
+  expect(view.container.querySelector('.toast[data-open="false"]')).toBeTruthy()
+  act(() => vi.advanceTimersByTime(280))
+  expect(view.container.querySelector('.toast')).toBeNull()
+  expect(dispatch).not.toHaveBeenCalled()
+})

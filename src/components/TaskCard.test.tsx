@@ -10,7 +10,8 @@ import {
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { freshData, transition, type Action } from '../services/engine'
-import { TaskCard, TaskReminders } from './TaskCard'
+import { TaskCard } from './TaskCard'
+import { Toast } from './Toast'
 import { TaskReminderPicker } from './TaskReminderPicker'
 import { useBuddy } from '../hooks/useBuddy'
 import { load, save } from '../services/storage'
@@ -45,7 +46,7 @@ function Tasks() {
     />
   )
 }
-it('adds with Enter, completes into a collapsed group, reopens, edits, and deletes a task', async () => {
+it('adds with Enter, completes into a visible group, reopens, edits, and deletes a task', async () => {
   const user = userEvent.setup()
   render(<Tasks />)
   expect(
@@ -66,7 +67,7 @@ it('adds with Enter, completes into a collapsed group, reopens, edits, and delet
   })
   vi.useRealTimers()
   expect(screen.getByText('Completed')).toBeTruthy()
-  fireEvent.click(screen.getByText('Completed'))
+  expect(document.querySelector<HTMLDetailsElement>('.tasks-completed')?.open).toBe(true)
   await user.click(screen.getByRole('checkbox', { name: 'Reopen Send update' }))
   await user.click(screen.getByLabelText('Actions for Send update'))
   await user.click(screen.getByRole('button', { name: 'Edit task' }))
@@ -119,7 +120,7 @@ it('rejects past picker times and cancels without changing the task draft', asyn
   expect(close).toHaveBeenCalledOnce()
   expect(set).not.toHaveBeenCalled()
 })
-it('shows persistent grouped reminders with individual actions and respects read-only mode', async () => {
+it('shows longer-lived reminder toasts with actions and respects read-only mode', () => {
   let data = transition(
     freshData(),
     { type: 'task-add', id: 'a', title: 'Call', reminderAt: now + 1000 },
@@ -127,20 +128,23 @@ it('shows persistent grouped reminders with individual actions and respects read
   )
   data = transition(data, { type: 'tick' }, now + 2000)
   const dispatch = vi.fn()
-  const user = userEvent.setup()
   const view = render(
-    <TaskReminders tasks={data.tasks} disabled={false} dispatch={dispatch} />,
+    <Toast messages={[]} onDismiss={vi.fn()} tasks={data.tasks} onTaskAction={dispatch} />,
   )
-  const reminder = within(
-    screen.getByRole('region', { name: 'Task reminders' }),
-  )
-  await user.click(reminder.getByRole('button', { name: 'Snooze 10 min' }))
-  expect(dispatch).toHaveBeenLastCalledWith({ type: 'task-snooze', id: 'a' })
-  view.rerender(
-    <TaskReminders tasks={data.tasks} disabled dispatch={dispatch} />,
+  const reminder = within(view.container)
+  vi.useFakeTimers()
+  act(() => { vi.advanceTimersByTime(5000) })
+  expect(view.container.querySelector('.toast[data-open="true"]')).toBeTruthy()
+  fireEvent.click(reminder.getByRole('button', { name: 'Dismiss' }))
+  act(() => { vi.advanceTimersByTime(280) })
+  expect(dispatch).toHaveBeenLastCalledWith({ type: 'task-dismiss', id: 'a' })
+  vi.useRealTimers()
+  view.unmount()
+  const readonly = render(
+    <Toast messages={[]} onDismiss={vi.fn()} tasks={data.tasks} disabled onTaskAction={dispatch} />,
   )
   expect(
-    (reminder.getByRole('button', { name: 'Complete' }) as HTMLButtonElement)
+    (within(readonly.container).getByRole('button', { name: 'Complete' }) as HTMLButtonElement)
       .disabled,
   ).toBe(true)
 })
@@ -317,7 +321,8 @@ it('keeps Completed mounted and delays reopening before moving the task to the t
   act(() => {
     vi.advanceTimersByTime(2200)
   })
-  fireEvent.click(screen.getByText('Completed'))
+  expect(document.querySelector<HTMLDetailsElement>('.tasks-completed')?.open).toBe(true)
+  screen.getByRole('checkbox', { name: 'Reopen Second task' }).focus()
   fireEvent.click(screen.getByRole('checkbox', { name: 'Reopen Second task' }))
   expect(document.querySelector('.tasks-completed .finishing-up')).toBeTruthy()
   act(() => {
@@ -331,6 +336,7 @@ it('keeps Completed mounted and delays reopening before moving the task to the t
     ...document.querySelectorAll('.task-body > .task-list .task-title'),
   ].map((element) => element.textContent)
   expect(titles).toEqual(['Second task', 'First task'])
+  expect(document.activeElement).toBe(screen.getByRole('checkbox', { name: 'Complete Second task' }))
   expect(document.querySelector('.tasks-completed')).toBe(group)
   expect(
     document

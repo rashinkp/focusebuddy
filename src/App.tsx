@@ -24,7 +24,7 @@ import { historyRange, type HistoryFilter } from './utils/historyDates'
 import { Settings } from './components/Settings'
 import { CreatorPopover } from './components/CreatorPopover'
 import { Toast } from './components/Toast'
-import { TaskCard, TaskReminders } from './components/TaskCard'
+import { TaskCard } from './components/TaskCard'
 import { duration, formatTime, inDay, workDuration } from './utils/time'
 
 export default function App() {
@@ -164,11 +164,6 @@ export default function App() {
             />
           )}
         </div>
-        <TaskReminders
-          tasks={data.tasks}
-          disabled={!canEdit}
-          dispatch={buddy.dispatch}
-        />
         {tab === 'today' ? (
           <>
             <div className="dashboard-grid">
@@ -331,7 +326,7 @@ export default function App() {
           </span>
         </footer>
       </main>
-      <Toast messages={buddy.messages} onDismiss={buddy.dismissMessage} />
+      <Toast messages={buddy.messages} onDismiss={buddy.dismissMessage} tasks={data.tasks} onTaskAction={buddy.dispatch} disabled={!canEdit} />
       {settingsOpen && (
         <Settings
           settings={data.settings}

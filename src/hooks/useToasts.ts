@@ -3,6 +3,8 @@ import { useCallback, useState } from 'react'
 export interface ToastMessage {
   id: string
   text: string
+  durationMs?: number
+  actions?: { label: string; onClick: () => void; disabled?: boolean }[]
   createdAt: number
 }
 
